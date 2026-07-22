@@ -9,7 +9,11 @@
     "lint": "eslint"
   },
   "dependencies": {
+<<<<<<< HEAD
     "lucide-react": "^1.25.0",
+=======
+    "firebase": "^12.16.0",
+>>>>>>> 0af1a1704adb840a157063bb15b077af9f4261fb
     "next": "16.2.11",
     "qrcode.react": "^4.2.0",
     "react": "19.2.4",

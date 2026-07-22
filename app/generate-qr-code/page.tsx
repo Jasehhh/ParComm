@@ -5,15 +5,24 @@ import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
+import { parsePlate, type PlateError } from "./plate";
 
 export default function GenerateQRCodePage() {
   const router = useRouter();
   const [plateNumber, setPlateNumber] = useState("");
   const [generatedValue, setGeneratedValue] = useState<string | null>(null);
+  const [error, setError] = useState<PlateError | null>(null);
 
   const handleGenerate = () => {
-    if (!plateNumber.trim()) return;
-    setGeneratedValue(plateNumber.trim());
+    const result = parsePlate(plateNumber);
+
+    if (result.ok) {
+      setGeneratedValue(result.value);
+      setError(null);
+    } else {
+      setGeneratedValue(null);
+      setError(result.error);
+    }
   };
 
   return (
@@ -40,11 +49,16 @@ export default function GenerateQRCodePage() {
             value={plateNumber}
             onChange={(e) => setPlateNumber(e.target.value)}
             placeholder="E.G. ABC 1234"
-            className="w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm mb-4 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400"
+            className="w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm mb-1 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400"
           />
+          {error && (
+            <p className="text-xs text-red-600 mb-3">{error.message}</p>
+          )}
           <button
             onClick={handleGenerate}
-            className="w-full bg-amber-50 border border-amber-300 rounded-lg py-2.5 text-sm font-medium text-gray-800 hover:bg-amber-100 transition"
+            className={`w-full bg-amber-50 border border-amber-300 rounded-lg py-2.5 text-sm font-medium text-gray-800 hover:bg-amber-100 transition ${
+              error ? "mt-1" : "mt-3"
+            }`}
           >
             Generate QR Code
           </button>
