@@ -1,4 +1,4 @@
-// app/generate-qr-code/plate.ts
+// app/generate-qr-code/ticket.ts
 
 // --- Functional error handling ---
 export type Result<T, E> =
@@ -18,7 +18,7 @@ export type PlateError =
   | { type: "TOO_SHORT"; message: string }
   | { type: "INVALID_CHARS"; message: string };
 
-// --- Pure normalization (composition of small pure functions) ---
+// --- Pure plate normalization (composition of small pure functions) ---
 const trimPlate = (raw: string): string => raw.trim();
 const collapseSpaces = (plate: string): string => plate.replace(/\s+/g, " ");
 const upperCasePlate = (plate: string): string => plate.toUpperCase();
@@ -48,7 +48,6 @@ const checkValidChars = (plate: string): Result<string, PlateError> =>
         message: "Only letters, numbers, and spaces are allowed.",
       });
 
-// Composed pipeline: normalize -> validate -> validate -> validate
 export const parsePlate = (raw: string): Result<string, PlateError> => {
   const normalized = normalizePlate(raw);
   return [checkNotEmpty, checkMinLength, checkValidChars].reduce(
@@ -56,3 +55,31 @@ export const parsePlate = (raw: string): Result<string, PlateError> => {
     ok(normalized) as Result<string, PlateError>
   );
 };
+
+// --- Ticket data: plate + entry timestamp packaged as JSON ---
+export type TicketData = {
+  plateNumber: string;
+  entryTimestamp: string; // ISO 8601
+};
+
+// Pure: builds the ticket record from validated inputs
+export const buildTicketData = (
+  plateNumber: string,
+  entryTimestamp: Date
+): TicketData => ({
+  plateNumber,
+  entryTimestamp: entryTimestamp.toISOString(),
+});
+
+// Pure: serializes ticket data to a JSON string (what the QR code encodes)
+export const ticketToJson = (ticket: TicketData): string =>
+  JSON.stringify(ticket);
+
+// Composed pipeline: raw plate + timestamp -> validated JSON string
+export const createTicketPayload = (
+  rawPlate: string,
+  entryTimestamp: Date
+): Result<string, PlateError> =>
+  andThen(parsePlate(rawPlate), (plate) =>
+    ok(ticketToJson(buildTicketData(plate, entryTimestamp)))
+  );

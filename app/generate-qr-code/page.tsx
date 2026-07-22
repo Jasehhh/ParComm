@@ -17,11 +17,11 @@ export default function GenerateQRCodePage() {
     const result = parsePlate(plateNumber);
 
     if (result.ok) {
-      setGeneratedValue(result.value);
+      setGeneratedValue(result.value); // only valid, normalized plates get here
       setError(null);
     } else {
       setGeneratedValue(null);
-      setError(result.error);
+      setError(result.error); // invalid plate -> no QR code, show why
     }
   };
 
