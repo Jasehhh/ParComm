@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronDown, ScanQrCode } from "lucide-react";
 import { Inter } from "next/font/google";
 import Link from "next/link";
+import { getStatus, getPercentFull } from "@/lib/parkingStatus";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -38,14 +39,8 @@ const BUILDINGS: Building[] = [
   { name: "University Gym", occupied: 30, capacity: 40 },
 ];
 
-function getStatus(percent: number) {
-  if (percent < 60) return { label: "Available", color: "#2CC83A", bg: "#2CC83A" };
-  if (percent < 85) return { label: "Limited", color: "#FF8A00", bg: "#FF8A00" };
-  return { label: "Full", color: "#E53935", bg: "#E53935" };
-}
-
 function Gauge({ occupied, capacity }: { occupied: number; capacity: number }) {
-  const percentFull = Math.round((occupied / capacity) * 100);
+  const percentFull = getPercentFull(occupied, capacity);
   const ringColor = getStatus(percentFull).color;
   const radius = 54;
   const circumference = 2 * Math.PI * radius;
@@ -78,7 +73,7 @@ function Gauge({ occupied, capacity }: { occupied: number; capacity: number }) {
 }
 
 function CapacityRow({ name, occupied, capacity }: Building) {
-  const percentFull = Math.round((occupied / capacity) * 100);
+  const percentFull = getPercentFull(occupied, capacity);
   const status = getStatus(percentFull);
 
   return (
@@ -87,7 +82,7 @@ function CapacityRow({ name, occupied, capacity }: Building) {
         <span className="text-[clamp(10px,1.4vw,14px)] font-medium text-black">{name}</span>
         <span
           className="text-[clamp(7px,0.9vw,10px)] font-medium px-[clamp(9px,1vw,12px)] py-[clamp(3px,0.4vw,5px)] rounded-full"
-          style={{ color: "#FFFFFF", backgroundColor: status.bg }}
+          style={{ color: "#FFFFFF", backgroundColor: status.color }}
         >
           {status.label}
         </span>
