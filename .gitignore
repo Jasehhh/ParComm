@@ -45,3 +45,6 @@ graphify-out/
 
 # dev server log
 dev.log
+
+# obsidian (local editor config)
+.obsidian/
