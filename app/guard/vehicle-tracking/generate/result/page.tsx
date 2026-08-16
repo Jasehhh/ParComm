@@ -1,4 +1,4 @@
-// app/generate-qr-code/result/page.tsx
+// app/guard/vehicle-tracking/generate/result/page.tsx
 "use client";
 
 import { Suspense, useMemo } from "react";
@@ -39,7 +39,7 @@ function ResultContent() {
     <div className="min-h-screen bg-black flex flex-col items-center justify-center px-4 py-6">
       <div className="w-full max-w-sm h-[700px] max-h-[85vh] bg-[#FBC02D] rounded-3xl p-5 flex flex-col">
         <button
-          onClick={() => router.push("/generate-qr-code")}
+          onClick={() => router.push("/guard/vehicle-tracking/generate")}
           className="flex items-center gap-2 text-black font-bold"
         >
           <ArrowLeft size={20} />

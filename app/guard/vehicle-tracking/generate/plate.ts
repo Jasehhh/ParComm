@@ -1,4 +1,4 @@
-// app/generate-qr-code/plate.ts
+// app/guard/vehicle-tracking/generate/plate.ts
 
 // --- Functional error handling ---
 export type Result<T, E> =
