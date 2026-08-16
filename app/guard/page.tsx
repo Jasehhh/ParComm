@@ -123,23 +123,24 @@ export default function GuardDashboardPage() {
 
       {/* Location select */}
       <div className="relative mb-[clamp(8px,1.3vw,12px)]">
-        <button
-          type="button"
-          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+        <div
           className="w-full h-[clamp(29px,3vw,38px)] flex items-center justify-between rounded-full pl-[clamp(10px,1.5vw,15px)] pr-1 text-[clamp(9px,1vw,13px)] text-black"
           style={{ backgroundColor: "#DCDCDD" }}
         >
           <span>{selectedLot.name}</span>
-          <span
-            className="w-[clamp(24px,2.5vw,32px)] h-[clamp(24px,2.5vw,32px)] rounded-full flex items-center justify-center shrink-0"
+          <button
+            type="button"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="w-[clamp(24px,2.5vw,32px)] h-[clamp(24px,2.5vw,32px)] rounded-full flex cursor-pointer items-center justify-center shrink-0 border-0 p-0"
             style={{ backgroundColor: "#F5A623" }}
+            aria-label="Toggle location dropdown"
           >
             <ChevronDown
               size={15}
               className={`text-white transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
             />
-          </span>
-        </button>
+          </button>
+        </div>
 
         {isDropdownOpen && (
           <div

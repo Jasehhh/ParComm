@@ -44,13 +44,17 @@ function ResultContent() {
       className={`${inter.variable} min-h-screen w-full p-4 flex flex-col gap-[clamp(14px,2.5vw,20px)]`}
       style={{ fontFamily: "var(--font-inter)", backgroundColor: "#F6F2D9" }}
     >
-      <button
-        onClick={() => router.push("/guard/vehicle-tracking/generate")}
-        className="-mx-4 -mt-4 flex items-center gap-2 bg-[#F5A623] px-4 py-4 text-black font-bold"
-      >
-        <ChevronLeft size={22} />
+      <div className="-mx-4 -mt-4 flex items-center gap-2 bg-[#F5A623] px-4 py-4 text-black font-bold">
+        <button
+          type="button"
+          onClick={() => router.push("/guard/vehicle-tracking/generate")}
+          className="flex cursor-pointer items-center"
+          aria-label="Go back"
+        >
+          <ChevronLeft size={22} />
+        </button>
         <span className="text-[clamp(15px,2vw,19px)]">Generate QR Code</span>
-      </button>
+      </div>
 
       <div className="flex-1 flex items-center justify-center w-full">
         <div className="w-full max-w-[420px] bg-[#FDFBF0] rounded-[16px] p-[clamp(20px,4vw,28px)] shadow-sm flex flex-col items-center">

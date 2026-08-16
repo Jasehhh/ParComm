@@ -94,10 +94,12 @@ export default function ScanQRPage() {
       style={{ fontFamily: "var(--font-inter)" }}
     >
       <div className="p-4" style={{ backgroundColor: "#F5A623" }}>
-        <Link href="/guard/vehicle-tracking" className="flex items-center gap-2 text-black font-bold">
-          <ChevronLeft size={22} />
+        <div className="flex items-center gap-2 text-black font-bold">
+          <Link href="/guard/vehicle-tracking" className="flex cursor-pointer items-center" aria-label="Go back">
+            <ChevronLeft size={22} />
+          </Link>
           <span className="text-lg">Scan QR Code</span>
-        </Link>
+        </div>
       </div>
 
       <div className="bg-black flex-1 flex flex-col items-center justify-center gap-5 p-6">
