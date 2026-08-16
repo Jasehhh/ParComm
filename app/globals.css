@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+/* Keep the live QR camera preview filled within its square frame. */
+#qr-reader,
+#qr-reader > div {
+  height: 100%;
+}
+
+#qr-reader video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
