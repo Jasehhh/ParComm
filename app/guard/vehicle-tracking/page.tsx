@@ -15,13 +15,12 @@ export default function VehicleTrackingPage() {
       className={`${inter.variable} min-h-screen w-full p-4 flex flex-col gap-[clamp(14px,2.5vw,20px)]`}
       style={{ fontFamily: "var(--font-inter)", backgroundColor: "#F6F2D9" }}
     >
-      <Link
-        href="/guard"
-        className="-mx-4 -mt-4 flex items-center gap-2 bg-[#F5A623] px-4 py-4 text-black font-bold"
-      >
-        <ChevronLeft size={22} />
+      <div className="-mx-4 -mt-4 flex items-center gap-2 bg-[#F5A623] px-4 py-4 text-black font-bold">
+        <Link href="/guard" className="flex cursor-pointer items-center" aria-label="Go back">
+          <ChevronLeft size={22} />
+        </Link>
         <span className="text-[clamp(15px,2vw,19px)]">Vehicle Tracking</span>
-      </Link>
+      </div>
 
       <Link
         href="/guard/vehicle-tracking/scan"
