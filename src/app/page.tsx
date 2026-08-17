@@ -1,17 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { attemptLogin } from "@/lib/authResult";
-import { Inter } from "next/font/google";
 import Image from "next/image";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
-
-export default function AdminLoginPage() {
+export default function DashboardLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -37,17 +31,14 @@ export default function AdminLoginPage() {
 
   return (
     <div
-      className={`${inter.variable} min-h-screen w-full flex items-center justify-center p-4`}
-      style={{ fontFamily: "var(--font-inter)", backgroundColor: "#F5A623" }}
+      className="min-h-screen w-full flex items-center justify-center p-4 bg-primary"
     >
       <div
-        className="relative w-full max-w-[340px] rounded-[16px] p-[clamp(20px,4vw,32px)] pt-[clamp(36px,6vw,48px)] flex flex-col gap-3"
-        style={{ backgroundColor: "#F6F2D9" }}
+        className="relative w-full max-w-85 rounded-2xl p-[clamp(20px,4vw,32px)] pt-[clamp(36px,6vw,48px)] flex flex-col gap-3 bg-[#F6F2D9]"
       >
       <div className="absolute -top-8 left-1/2 -translate-x-1/2">
         <div
-          className="w-16 h-16 rounded-full flex items-center justify-center shadow-md overflow-hidden"
-          style={{ backgroundColor: "#FFFFFF" }}
+          className="w-16 h-16 rounded-full flex items-center justify-center shadow-md overflow-hidden bg-white"
         >
           <Image
             src="/parcomm-logo.png"
@@ -60,7 +51,7 @@ export default function AdminLoginPage() {
       </div>
 
         <h1 className="text-center font-bold text-[clamp(16px,2vw,19px)] text-black mt-2">
-          Administration Portal
+          Welcome to ParComm
         </h1>
 
         <form onSubmit={handleLogin} className="flex flex-col gap-3 mt-2">
@@ -75,14 +66,9 @@ export default function AdminLoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="ParComm@cpu.edu.ph"
-              className="rounded-[8px] px-3 py-2 text-[clamp(11px,1.3vw,13px)] outline-none"
-              style={{
-                backgroundColor: "#FDFBF0",
-                border: "1px solid #E8C97A",
-                color: "#111111",
-              }}
+              className="rounded-lg px-3 py-2 text-[clamp(11px,1.3vw,13px)] outline-none bg-[#FDFBF0] border-[#E8C97A] text-[#111111]"
             />
-          </div>
+          </div> 
 
           <div className="flex flex-col gap-1">
             <label className="text-[clamp(11px,1.3vw,13px)] font-medium text-black">
@@ -95,12 +81,7 @@ export default function AdminLoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password"
-                className="w-full rounded-[8px] px-3 py-2 pr-10 text-[clamp(11px,1.3vw,13px)] outline-none"
-                style={{
-                  backgroundColor: "#FDFBF0",
-                  border: "1px solid #E8C97A",
-                  color: "#111111",
-                }}
+                className="w-full rounded-lg px-3 py-2 pr-10 text-[clamp(11px,1.3vw,13px)] outline-none bg-[#FDFBF0] border-[#E8C97A] text-[#111111]"
               />
               <button
                 type="button"
@@ -133,8 +114,8 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 rounded-[10px] py-2.5 font-semibold text-[clamp(12px,1.4vw,14px)] text-white disabled:opacity-60"
-            style={{ backgroundColor: "#F5A623" }}
+            className="mt-2 rounded-[10px] py-2.5 font-semibold text-[clamp(12px,1.4vw,14px)] text-white disabled:opacity-60 bg-primary hover:bg-[#e69c1f] transition-colors"
+
           >
             {loading ? "Logging in..." : "Log in"}
           </button>
