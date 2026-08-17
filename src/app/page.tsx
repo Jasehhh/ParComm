@@ -9,14 +9,14 @@ export default function FlashScreen() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.push("/user");
-    }, 2000);
+      router.push("/login-page");
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, [router]);
 
   return (
-    <div className="min-h-screen w-full bg-[#F6F2D9] font-sans flex flex-col items-center justify-center gap-2">
+    <div className="min-h-screen w-full bg-[#F6F2D9] font-sans flex flex-col items-center justify-center gap-2 transition animate-grow-logo">
       <Image
         src="/parcomm-logo-full.png"
         alt="ParComm"

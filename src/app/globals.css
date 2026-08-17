@@ -38,3 +38,22 @@ body {
   height: 100% !important;
   object-fit: cover;
 }
+
+@keyframes grow-logo {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.7;
+  }
+  60% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-grow-logo {
+  animation: grow-logo 1.5s ease-out both;
+}
