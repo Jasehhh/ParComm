@@ -2,14 +2,8 @@
 
 import { useState } from "react";
 import { ChevronDown, ScanQrCode } from "lucide-react";
-import { Inter } from "next/font/google";
 import Link from "next/link";
 import { getStatus, getPercentFull } from "@/lib/parkingStatus";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
 
 type Lot = {
   id: string;
@@ -109,15 +103,12 @@ export default function GuardDashboardPage() {
   const availableSpaces = selectedLot.capacity - selectedLot.occupied;
 
   return (
-    <div
-      className={`${inter.variable} min-h-screen w-full relative p-4 pb-8`}
-      style={{ fontFamily: "var(--font-inter)", backgroundColor: "#F6F2D9" }}
-    >
+    <div className="min-h-screen w-full relative bg-page p-4 pb-8">
       {/* Header */}
       <div className="text-center mb-[clamp(9px,1.5vw,14px)]">
         <span className="font-bold text-[clamp(19px,2.5vw,28px)] leading-none">
-          <span style={{ color: "#F5A623" }}>Par</span>
-          <span style={{ color: "#D2691E" }}>Comm</span>
+          <span className="text-brand">Par</span>
+          <span className="text-brand-deep">Comm</span>
         </span>
       </div>
 
@@ -126,14 +117,10 @@ export default function GuardDashboardPage() {
         <button
           type="button"
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="w-full h-[clamp(29px,3vw,38px)] flex items-center justify-between rounded-full pl-[clamp(10px,1.5vw,15px)] pr-1 text-[clamp(9px,1vw,13px)] text-black"
-          style={{ backgroundColor: "#DCDCDD" }}
+          className="w-full h-[clamp(29px,3vw,38px)] flex items-center justify-between rounded-full bg-surface pl-[clamp(10px,1.5vw,15px)] pr-1 text-[clamp(9px,1vw,13px)] text-black"
         >
           <span>{selectedLot.name}</span>
-          <span
-            className="w-[clamp(24px,2.5vw,32px)] h-[clamp(24px,2.5vw,32px)] rounded-full flex items-center justify-center shrink-0"
-            style={{ backgroundColor: "#F5A623" }}
-          >
+          <span className="w-[clamp(24px,2.5vw,32px)] h-[clamp(24px,2.5vw,32px)] rounded-full bg-brand flex items-center justify-center shrink-0">
             <ChevronDown
               size={15}
               className={`text-white transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
@@ -142,10 +129,7 @@ export default function GuardDashboardPage() {
         </button>
 
         {isDropdownOpen && (
-          <div
-            className="absolute z-20 top-[calc(100%+5px)] left-0 w-full rounded-[14px] p-[5px] shadow-lg"
-            style={{ backgroundColor: "#DCDCDD" }}
-          >
+          <div className="absolute z-20 top-[calc(100%+5px)] left-0 w-full rounded-[14px] bg-surface p-[5px] shadow-lg">
             {LOCATIONS.map((location) => (
               <button
                 type="button"
@@ -201,8 +185,7 @@ export default function GuardDashboardPage() {
       {/* Floating QR button */}
       <Link
         href="/guard/vehicle-tracking"
-        className="fixed bottom-2 left-1/2 z-50 -translate-x-1/2 rounded-full border-4 p-[clamp(10px,1.8vw,14px)] shadow-lg"
-        style={{ backgroundColor: "#F6F2D9", borderColor: "#F5A623" }}
+        className="fixed bottom-2 left-1/2 z-50 -translate-x-1/2 rounded-full border-4 border-[#F5A623] bg-page p-[clamp(10px,1.8vw,14px)] shadow-lg"
       >
         <ScanQrCode size={22} className="text-black" strokeWidth={2} />
       </Link>

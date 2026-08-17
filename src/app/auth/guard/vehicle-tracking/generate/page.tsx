@@ -4,13 +4,7 @@
 import { useState } from "react";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Inter } from "next/font/google";
 import { parsePlate, type PlateError } from "./plate";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
 
 export default function GenerateQRCodePage() {
   const router = useRouter();
@@ -30,10 +24,7 @@ export default function GenerateQRCodePage() {
   };
 
   return (
-    <div
-      className={`${inter.variable} min-h-screen w-full p-4 flex flex-col gap-[clamp(14px,2.5vw,20px)]`}
-      style={{ fontFamily: "var(--font-inter)", backgroundColor: "#F6F2D9" }}
-    >
+    <div className="min-h-screen w-full bg-page p-4 flex flex-col gap-[clamp(14px,2.5vw,20px)]">
       <button
         onClick={() => router.back()}
         className="-mx-4 -mt-4 flex items-center gap-2 bg-[#F5A623] px-4 py-4 text-black font-bold"
@@ -59,10 +50,9 @@ export default function GenerateQRCodePage() {
           )}
           <button
             onClick={handleGenerate}
-            className={`w-full rounded-lg py-2.5 text-[clamp(12px,1.4vw,14px)] font-semibold text-white transition ${
+            className={`w-full rounded-lg bg-brand py-2.5 text-[clamp(12px,1.4vw,14px)] font-semibold text-white transition ${
               error ? "mt-1" : "mt-3"
             }`}
-            style={{ backgroundColor: "#F5A623" }}
           >
             Generate QR Code
           </button>

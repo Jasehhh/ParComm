@@ -4,13 +4,7 @@ import { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
-import { Inter } from "next/font/google";
 import { getStatus, getPercentFull } from "@/lib/parkingStatus";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
 
 type ActivityRow = {
   id: string;
@@ -89,13 +83,12 @@ function CapacityRow({ name, occupied, capacity }: Building) {
       <div className="flex justify-between items-center mb-1">
         <span className="text-[clamp(9px,1.1vw,12px)] font-medium text-black">{name}</span>
         <span
-          className="text-[clamp(6px,0.7vw,8px)] font-medium px-2 py-0.5 rounded-full"
-          style={{ color: "#FFFFFF", backgroundColor: status.color }}
+          className="text-[clamp(6px,0.7vw,8px)] font-medium px-2 py-0.5 rounded-full bg-white"
         >
           {status.label}
         </span>
       </div>
-      <div className="h-[5px] rounded-full bg-stone-200 overflow-hidden">
+      <div className="h-1.25 rounded-full bg-stone-200 overflow-hidden">
         <div
           className="h-full rounded-full"
           style={{ width: `${percentFull}%`, backgroundColor: status.color }}
@@ -134,26 +127,20 @@ export default function AdminDashboardPage() {
 
   if (checkingAuth || !user) {
     return (
-      <div
-        className="min-h-screen w-full flex items-center justify-center"
-        style={{ backgroundColor: "#F6F2D9" }}
-      >
+      <div className="min-h-screen w-full flex items-center justify-center bg-page">
         <p className="text-black text-sm">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div
-      className={`${inter.variable} min-h-screen w-full p-4 sm:p-6`}
-      style={{ fontFamily: "var(--font-inter)", backgroundColor: "#F6F2D9" }}
-    >
+    <div className="min-h-screen w-full bg-page p-4 sm:p-6">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-[clamp(15px,1.8vw,20px)] font-medium text-black">
           Welcome to{" "}
           <span className="font-bold">
-            <span style={{ color: "#F5A623" }}>Par</span>
-            <span style={{ color: "#D2691E" }}>Comm</span>
+            <span className="text-brand">Par</span>
+            <span className="text-brand-deep">Comm</span>
           </span>
         </h1>
         <button
@@ -165,7 +152,7 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="grid md:grid-cols-[1fr_320px] gap-4">
-        <div className="rounded-[14px] overflow-hidden" style={{ backgroundColor: "#F5A623" }}>
+        <div className="rounded-[14px] overflow-hidden bg-brand">
           <p className="font-bold text-[clamp(13px,1.5vw,16px)] text-black p-3">Activity Log</p>
 
           <div className="overflow-x-auto">
@@ -183,7 +170,7 @@ export default function AdminDashboardPage() {
                 {ACTIVITY_LOG.map((row, i) => (
                   <tr
                     key={row.id}
-                    style={{ backgroundColor: i % 2 === 0 ? "#FBBF4D" : "transparent" }}
+                    className={i % 2 === 0 ? "bg-[#FBBF4D]" : "bg-transparent"}
                   >
                     <td className="px-3 py-1.5 text-black">{row.id}</td>
                     <td className="px-3 py-1.5 text-black">{row.plate}</td>

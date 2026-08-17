@@ -5,12 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { Html5Qrcode, Html5QrcodeScannerState } from "html5-qrcode";
-import { Inter } from "next/font/google";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
 
 export default function ScanQRPage() {
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -89,10 +83,7 @@ export default function ScanQRPage() {
   }, [router]);
 
   return (
-    <div
-      className={`${inter.variable} min-h-screen w-full flex flex-col`}
-      style={{ fontFamily: "var(--font-inter)" }}
-    >
+    <div className="min-h-screen w-full flex flex-col">
       <div className="p-4" style={{ backgroundColor: "#F5A623" }}>
         <Link href="/guard/vehicle-tracking" className="flex items-center gap-2 text-black font-bold">
           <ChevronLeft size={22} />

@@ -15,6 +15,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --font-inter: "Segoe UI", Arial, Helvetica, sans-serif;
 }
 
 @theme inline {
@@ -23,6 +24,32 @@
   --font-sans: var(--font-inter);
   --font-mono: var(--font-inter);
   --color-primary: #F5A623;
+  --color-brand: #F5A623;
+  --color-brand-deep: #D2691E;
+  --color-page: #F6F2D9;
+  --color-surface: #DCDCDD;
+}
+
+@layer utilities {
+  .bg-page {
+    background-color: var(--color-page);
+  }
+
+  .bg-brand {
+    background-color: var(--color-brand);
+  }
+
+  .bg-surface {
+    background-color: var(--color-surface);
+  }
+
+  .text-brand {
+    color: var(--color-brand);
+  }
+
+  .text-brand-deep {
+    color: var(--color-brand-deep);
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -36,5 +63,10 @@ html,
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter);
 }
+
+body {
+  min-height: 100vh;
+}
+

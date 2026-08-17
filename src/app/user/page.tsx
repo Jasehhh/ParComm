@@ -2,12 +2,6 @@
 
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { Inter } from "next/font/google";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
 
 type Lot = {
   id: string;
@@ -163,19 +157,13 @@ export default function UserDashboardPage() {
   const availableSpaces = selectedLot.capacity - selectedLot.occupied;
 
   return (
-    <div
-      className={`${inter.variable} min-h-screen w-full flex items-center justify-center bg-stone-900 p-4 sm:p-6 md:p-8`}
-      style={{ fontFamily: "var(--font-inter)" }}
-    >
-      <div
-        className="relative w-full max-w-[390px] rounded-[18px] p-[clamp(10px,2vw,18px)]"
-        style={{ backgroundColor: "#F6F2D9" }}
-      >
+    <div className="min-h-screen w-full flex items-center justify-center bg-stone-900 p-4 sm:p-6 md:p-8">
+      <div className="relative w-full max-w-[390px] rounded-[18px] bg-page p-[clamp(10px,2vw,18px)]">
         {/* Header */}
         <div className="text-center mb-[clamp(9px,1.5vw,14px)]">
           <span className="font-bold text-[clamp(19px,2.5vw,28px)] leading-none">
-            <span style={{ color: "#F5A623" }}>Par</span>
-            <span style={{ color: "#D2691E" }}>Comm</span>
+            <span className="text-brand">Par</span>
+            <span className="text-brand-deep">Comm</span>
           </span>
         </div>
 

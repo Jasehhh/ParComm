@@ -5,12 +5,6 @@ import { Suspense, useState } from "react";
 import { ChevronLeft, Share2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
-import { Inter } from "next/font/google";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
 
 const formatValidUntil = (date: Date): string =>
   date.toLocaleDateString("en-US", {
@@ -40,10 +34,7 @@ function ResultContent() {
   };
 
   return (
-    <div
-      className={`${inter.variable} min-h-screen w-full p-4 flex flex-col gap-[clamp(14px,2.5vw,20px)]`}
-      style={{ fontFamily: "var(--font-inter)", backgroundColor: "#F6F2D9" }}
-    >
+    <div className="min-h-screen w-full bg-page p-4 flex flex-col gap-[clamp(14px,2.5vw,20px)]">
       <button
         onClick={() => router.push("/guard/vehicle-tracking/generate")}
         className="-mx-4 -mt-4 flex items-center gap-2 bg-[#F5A623] px-4 py-4 text-black font-bold"
@@ -55,8 +46,8 @@ function ResultContent() {
       <div className="flex-1 flex items-center justify-center w-full">
         <div className="w-full max-w-[420px] bg-[#FDFBF0] rounded-[16px] p-[clamp(20px,4vw,28px)] shadow-sm flex flex-col items-center">
           <p className="text-2xl font-bold leading-none">
-            <span style={{ color: "#F5A623" }}>Par</span>
-            <span style={{ color: "#D2691E" }}>Comm</span>
+            <span className="text-brand">Par</span>
+            <span className="text-brand-deep">Comm</span>
           </p>
           <p className="text-xs text-gray-600 mt-1 mb-4">
             Look for place. Occupy space.
