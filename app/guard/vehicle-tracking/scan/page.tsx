@@ -42,16 +42,33 @@ export default function ScanQRPage() {
     };
 
     function handleScanResult(decodedText: string) {
+      let plateNumber = decodedText.trim();
+
+      // 1. Try JSON parsing (if payload is {"plate": "ABC-1234"})
       try {
-        const data = JSON.parse(decodedText);
-        router.push(`/guard/vehicle-tracking?scanned=${data.plate}`);
+        const parsed = JSON.parse(decodedText);
+        if (parsed && typeof parsed.plate === "string") {
+          plateNumber = parsed.plate;
+        }
       } catch {
-        setError("Invalid QR code");
+        // Fallback: If not JSON, process string directly
+      }
+
+      // 2. Extract plate format if wrapped in text like "[ QR: ABC-1234 ]"
+      const extractedMatch = plateNumber.match(/([A-Z]{3}-\d{3,4})/i);
+      if (extractedMatch) {
+        plateNumber = extractedMatch[1].toUpperCase();
+      }
+
+      // 3. Final sanity check before navigation
+      if (plateNumber.length > 0) {
+        router.push(`/guard/vehicle-tracking?scanned=${encodeURIComponent(plateNumber)}`);
+      } else {
+        setError("Invalid or unreadable QR content.");
       }
     }
 
     // Delaying startup by one frame lets React Strict Mode cancel its test mount
-    // before html5-qrcode adds a video element to the reader container.
     const startFrame = requestAnimationFrame(() => {
       if (disposed) return;
 
@@ -105,10 +122,10 @@ export default function ScanQRPage() {
       <div className="bg-black flex-1 flex flex-col items-center justify-center gap-5 p-6">
         <div
           id="qr-reader"
-          className="w-full max-w-[280px] aspect-square rounded-[12px] overflow-hidden"
+          className="w-full max-w-70 aspect-square rounded-xl overflow-hidden"
           style={{ border: "2px solid #F5A623" }}
         />
-        {error && <p className="text-red-400 text-sm">{error}</p>}
+        {error && <p className="text-red-400 text-sm text-center font-medium">{error}</p>}
         <p className="text-white/70 text-sm mb-4">Align the QR code inside frame.</p>
       </div>
     </div>

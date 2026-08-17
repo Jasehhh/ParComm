@@ -1,5 +1,4 @@
 // lib/functional.ts
-
 /**
  * pipe — Higher-Order Function + Function Composition
  * Takes multiple single-argument functions and combines them into one function
@@ -11,7 +10,6 @@ export const pipe = <T>(...fns: Array<(arg: T) => T>) =>
 
 /**
  * Result type — shared shape for Functional Error Handling
- * (matches the one used in plate.ts and authResult.ts)
  */
 export type Result<T, E> =
   | { ok: true; value: T }
@@ -39,3 +37,67 @@ export const combineValidators = <T, E>(
     (result, validator) => andThen(result, validator),
     { ok: true, value } as Result<T, E>
   );
+
+// ==========================================
+// INPUT VALIDATORS & FORMATTERS
+// ==========================================
+
+export const validateNonEmpty = (value: string): Result<string, string> =>
+  value.trim().length > 0
+    ? { ok: true, value: value.trim() }
+    : { ok: false, error: "Field cannot be empty." };
+
+export const validatePlateFormat = (plate: string): Result<string, string> => {
+  const formatted = plate.toUpperCase();
+  const plateRegex = /^[A-Z]{3}-\d{3,4}$/;
+
+  return plateRegex.test(formatted)
+    ? { ok: true, value: formatted }
+    : { ok: false, error: "Invalid format. Standard format: ABC-123 or ABC-1234." };
+};
+
+export const validatePlateNumber = (plate: string): Result<string, string> =>
+  combineValidators<string, string>([
+    validateNonEmpty,
+    validatePlateFormat,
+  ])(plate);
+
+export const validateCapacityThreshold = (
+  capacityInput: string | number,
+  maxThreshold: number = 50
+): Result<number, string> => {
+  const capacity = typeof capacityInput === "string" ? Number(capacityInput) : capacityInput;
+
+  if (capacityInput === "" || capacityInput === null || capacityInput === undefined) {
+    return { ok: false, error: "Capacity is required." };
+  }
+
+  if (isNaN(capacity)) {
+    return { ok: false, error: "Capacity must be a valid number." };
+  }
+
+  if (capacity <= 0) {
+    return { ok: false, error: "Capacity must be greater than zero." };
+  }
+
+  if (capacity > maxThreshold) {
+    return {
+      ok: false,
+      error: `Capacity exceeds maximum allowed threshold of ${maxThreshold}.`,
+    };
+  }
+
+  return { ok: true, value: capacity };
+};
+
+export const formatPlateInput = (input: string): string => {
+  const clean = input.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const letters = clean.slice(0, 3).replace(/[^A-Z]/g, "");
+  const rest = clean.slice(letters.length);
+
+  if (letters.length === 3) {
+    return `${letters}-${rest}`;
+  }
+
+  return letters;
+};
