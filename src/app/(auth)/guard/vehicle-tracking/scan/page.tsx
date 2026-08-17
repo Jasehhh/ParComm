@@ -84,7 +84,7 @@ export default function ScanQRPage() {
     <div className="min-h-screen w-full flex flex-col font-sans">
       <div className="bg-[#F5A623] p-4">
         <div className="flex items-center gap-2 font-bold text-black">
-          <Link href="/auth/guard/vehicle-tracking" className="flex cursor-pointer items-center" aria-label="Go back">
+          <Link href="/guard/vehicle-tracking" className="flex cursor-pointer items-center" aria-label="Go back">
             <ChevronLeft size={22} />
           </Link>
           <span className="text-lg">Scan QR Code</span>

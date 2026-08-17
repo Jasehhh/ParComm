@@ -7,14 +7,14 @@ export default function VehicleTrackingPage() {
   return (
     <div className="min-h-screen w-full bg-[#F6F2D9] p-4 font-sans flex flex-col gap-[clamp(14px,2.5vw,20px)]">
       <div className="-mx-4 -mt-4 flex items-center gap-2 bg-[#F5A623] px-4 py-4 font-bold text-black">
-        <Link href="/auth/guard" className="flex cursor-pointer items-center" aria-label="Go back">
+        <Link href="/guard" className="flex cursor-pointer items-center" aria-label="Go back">
           <ChevronLeft size={22} />
         </Link>
         <span className="text-[clamp(15px,2vw,19px)]">Vehicle Tracking</span>
       </div>
 
       <Link
-        href="/auth/guard/vehicle-tracking/scan"
+        href="/guard/vehicle-tracking/scan"
         className="flex flex-col items-center gap-[clamp(6px,1vw,10px)] rounded-[16px] bg-[#F5A623] p-[clamp(24px,5vw,36px)] text-center"
       >
         <ScanQrCode size={56} strokeWidth={1.5} className="text-white" />
@@ -23,7 +23,7 @@ export default function VehicleTrackingPage() {
       </Link>
 
       <Link
-        href="/auth/guard/vehicle-tracking/generate"
+        href="/guard/vehicle-tracking/generate"
         className="flex flex-col items-center gap-[clamp(6px,1vw,10px)] rounded-[16px] bg-[#F5A623] p-[clamp(24px,5vw,36px)] text-center"
       >
         <QrCode size={56} strokeWidth={1.5} className="text-white" />

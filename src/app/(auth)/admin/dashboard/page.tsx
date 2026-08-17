@@ -104,7 +104,7 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (!firebaseUser) {
-        router.push("/auth/admin/login");
+        router.push("/login-page");
       } else {
         setUser(firebaseUser);
       }
@@ -116,7 +116,7 @@ export default function AdminDashboardPage() {
 
   async function handleLogout() {
     await signOut(auth);
-    router.push("/auth/admin/login");
+    router.push("/login-page");
   }
 
   if (checkingAuth || !user) {

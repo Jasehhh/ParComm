@@ -176,7 +176,7 @@ export default function GuardDashboardPage() {
       </div>
 
       <Link
-        href="/auth/guard/vehicle-tracking"
+        href="/guard/vehicle-tracking"
         className="fixed bottom-2 left-1/2 z-50 -translate-x-1/2 rounded-full border-4 border-[#F5A623] bg-[#F6F2D9] p-[clamp(10px,1.8vw,14px)] shadow-lg"
       >
         <ScanQrCode size={22} className="text-black" strokeWidth={2} />

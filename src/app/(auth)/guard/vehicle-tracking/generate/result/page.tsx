@@ -37,7 +37,7 @@ function ResultContent() {
       <div className="-mx-4 -mt-4 flex items-center gap-2 bg-[#F5A623] px-4 py-4 font-bold text-black">
         <button
           type="button"
-          onClick={() => router.push("/auth/guard/vehicle-tracking/generate")}
+          onClick={() => router.push("/guard/vehicle-tracking/generate")}
           className="flex cursor-pointer items-center"
           aria-label="Go back"
         >
