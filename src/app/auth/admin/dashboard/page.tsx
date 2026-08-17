@@ -2,15 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut, type User } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
-import { Inter } from "next/font/google";
-import { getStatus, getPercentFull } from "@/lib/parkingStatus";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
+import { auth } from "@/lib/firebase";
+import { getPercentFull, getStatus } from "@/lib/parkingStatus";
 
 type ActivityRow = {
   id: string;
@@ -20,7 +14,6 @@ type ActivityRow = {
   location: string;
 };
 
-// temporary: hardcoded data (need firebase realtime db)
 const ACTIVITY_LOG: ActivityRow[] = [
   { id: "001", plate: "ABC 1234", time: "00:00:00", status: "Parked", location: "Engi. Bldg." },
   { id: "002", plate: "ABC 1234", time: "00:00:00", status: "Exited", location: "" },
@@ -56,8 +49,8 @@ function Gauge({ occupied, capacity }: { occupied: number; capacity: number }) {
   const strokeDashoffset = circumference - filledLength;
 
   return (
-    <div className="relative w-[clamp(110px,20vw,150px)] aspect-square mx-auto">
-      <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
+    <div className="relative mx-auto aspect-square w-[clamp(110px,20vw,150px)]">
+      <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90">
         <circle cx="60" cy="60" r={radius} fill="none" stroke="#E5DFC8" strokeWidth="10" />
         <circle
           cx="60"
@@ -69,12 +62,12 @@ function Gauge({ occupied, capacity }: { occupied: number; capacity: number }) {
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset}
-          style={{ transition: "stroke-dashoffset 0.6s ease" }}
+          className="transition-[stroke-dashoffset] duration-600 ease-out"
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-[clamp(20px,3vw,28px)] leading-none font-bold text-black">{occupied}</span>
-        <span className="text-[clamp(8px,1.1vw,10px)] text-black mt-1">/ {capacity}</span>
+        <span className="text-[clamp(20px,3vw,28px)] font-bold leading-none text-black">{occupied}</span>
+        <span className="mt-1 text-[clamp(8px,1.1vw,10px)] text-black">/ {capacity}</span>
       </div>
     </div>
   );
@@ -86,22 +79,16 @@ function CapacityRow({ name, occupied, capacity }: Building) {
 
   return (
     <div className="rounded-[10px] bg-white p-[clamp(8px,1vw,12px)]">
-      <div className="flex justify-between items-center mb-1">
+      <div className="mb-1 flex items-center justify-between">
         <span className="text-[clamp(9px,1.1vw,12px)] font-medium text-black">{name}</span>
-        <span
-          className="text-[clamp(6px,0.7vw,8px)] font-medium px-2 py-0.5 rounded-full"
-          style={{ color: "#FFFFFF", backgroundColor: status.color }}
-        >
+        <span className="rounded-full bg-current px-2 py-0.5 text-[clamp(6px,0.7vw,8px)] font-medium text-white" style={{ backgroundColor: status.color }}>
           {status.label}
         </span>
       </div>
-      <div className="h-[5px] rounded-full bg-stone-200 overflow-hidden">
-        <div
-          className="h-full rounded-full"
-          style={{ width: `${percentFull}%`, backgroundColor: status.color }}
-        />
+      <div className="h-[5px] overflow-hidden rounded-full bg-stone-200">
+        <div className="h-full rounded-full" style={{ width: `${percentFull}%`, backgroundColor: status.color }} />
       </div>
-      <div className="flex justify-between text-[clamp(6px,0.7vw,8px)] text-black mt-1">
+      <div className="mt-1 flex justify-between text-[clamp(6px,0.7vw,8px)] text-black">
         <span>{occupied} / {capacity}</span>
         <span>{percentFull}%</span>
       </div>
@@ -117,7 +104,7 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (!firebaseUser) {
-        router.push("/admin/login");
+        router.push("/auth/admin/login");
       } else {
         setUser(firebaseUser);
       }
@@ -129,34 +116,26 @@ export default function AdminDashboardPage() {
 
   async function handleLogout() {
     await signOut(auth);
-    router.push("/admin/login");
+    router.push("/auth/admin/login");
   }
 
   if (checkingAuth || !user) {
     return (
-      <div
-        className="min-h-screen w-full flex items-center justify-center"
-        style={{ backgroundColor: "#F6F2D9" }}
-      >
-        <p className="text-black text-sm">Loading...</p>
+      <div className="flex min-h-screen w-full items-center justify-center bg-[#F6F2D9]">
+        <p className="text-sm text-black">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div
-      className={`${inter.variable} min-h-screen w-full p-4 sm:p-6`}
-      style={{ fontFamily: "var(--font-inter)", backgroundColor: "#F6F2D9" }}
-    >
-      <div className="flex items-center justify-between mb-4">
+    <div className="min-h-screen w-full bg-[#F6F2D9] p-4 font-sans sm:p-6">
+      <div className="mb-4 flex items-center justify-between">
         <h1 className="text-[clamp(15px,1.8vw,20px)] font-medium text-black">
-          Welcome to{" "}
-          <span className="font-bold">
-            <span style={{ color: "#F5A623" }}>Par</span>
-            <span style={{ color: "#D2691E" }}>Comm</span>
-          </span>
+          Welcome to <span className="font-bold text-[#F5A623]">Par</span>
+          <span className="font-bold text-[#D2691E]">Comm</span>
         </h1>
         <button
+          type="button"
           onClick={handleLogout}
           className="text-[clamp(11px,1.2vw,13px)] font-semibold text-red-600"
         >
@@ -164,9 +143,9 @@ export default function AdminDashboardPage() {
         </button>
       </div>
 
-      <div className="grid md:grid-cols-[1fr_320px] gap-4">
-        <div className="rounded-[14px] overflow-hidden" style={{ backgroundColor: "#F5A623" }}>
-          <p className="font-bold text-[clamp(13px,1.5vw,16px)] text-black p-3">Activity Log</p>
+      <div className="grid gap-4 md:grid-cols-[1fr_320px]">
+        <div className="overflow-hidden rounded-[14px] bg-[#F5A623]">
+          <p className="p-3 text-[clamp(13px,1.5vw,16px)] font-bold text-black">Activity Log</p>
 
           <div className="overflow-x-auto">
             <table className="w-full text-[clamp(10px,1.1vw,12px)]">
@@ -181,10 +160,7 @@ export default function AdminDashboardPage() {
               </thead>
               <tbody>
                 {ACTIVITY_LOG.map((row, i) => (
-                  <tr
-                    key={row.id}
-                    style={{ backgroundColor: i % 2 === 0 ? "#FBBF4D" : "transparent" }}
-                  >
+                  <tr key={row.id} className={i % 2 === 0 ? "bg-[#FBBF4D]" : "bg-transparent"}>
                     <td className="px-3 py-1.5 text-black">{row.id}</td>
                     <td className="px-3 py-1.5 text-black">{row.plate}</td>
                     <td className="px-3 py-1.5 text-black">{row.time}</td>
@@ -198,17 +174,17 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="flex flex-col gap-3">
-          <div className="rounded-[14px] p-[clamp(12px,1.5vw,16px)] text-center bg-stone-200">
-            <p className="font-semibold text-[clamp(11px,1.2vw,14px)] text-black leading-none">
+          <div className="rounded-[14px] bg-stone-200 p-[clamp(12px,1.5vw,16px)] text-center">
+            <p className="text-[clamp(11px,1.2vw,14px)] font-semibold leading-none text-black">
               Campus Parking Status
             </p>
-            <p className="text-[clamp(7px,0.9vw,9px)] text-black mt-1 mb-1">
+            <p className="mt-1 mb-1 text-[clamp(7px,0.9vw,9px)] text-black">
               Live Availability Monitor
             </p>
 
             <Gauge occupied={CAMPUS_TOTAL.occupied} capacity={CAMPUS_TOTAL.capacity} />
 
-            <div className="flex justify-between mt-2 px-1">
+            <div className="mt-2 flex justify-between px-1">
               <div>
                 <p className="text-[clamp(7px,0.8vw,9px)] text-black">Available Spaces</p>
                 <p className="text-[clamp(10px,1.1vw,13px)] font-semibold text-black">

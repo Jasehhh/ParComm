@@ -5,12 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { Html5Qrcode, Html5QrcodeScannerState } from "html5-qrcode";
-import { Inter } from "next/font/google";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
 
 export default function ScanQRPage() {
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -44,14 +38,12 @@ export default function ScanQRPage() {
     function handleScanResult(decodedText: string) {
       try {
         const data = JSON.parse(decodedText);
-        router.push(`/guard/vehicle-tracking?scanned=${data.plate}`);
+        router.push(`/auth/guard/vehicle-tracking?scanned=${data.plate}`);
       } catch {
         setError("Invalid QR code");
       }
     }
 
-    // Delaying startup by one frame lets React Strict Mode cancel its test mount
-    // before html5-qrcode adds a video element to the reader container.
     const startFrame = requestAnimationFrame(() => {
       if (disposed) return;
 
@@ -89,27 +81,20 @@ export default function ScanQRPage() {
   }, [router]);
 
   return (
-    <div
-      className={`${inter.variable} min-h-screen w-full flex flex-col`}
-      style={{ fontFamily: "var(--font-inter)" }}
-    >
-      <div className="p-4" style={{ backgroundColor: "#F5A623" }}>
-        <div className="flex items-center gap-2 text-black font-bold">
-          <Link href="/guard/vehicle-tracking" className="flex cursor-pointer items-center" aria-label="Go back">
+    <div className="min-h-screen w-full flex flex-col font-sans">
+      <div className="bg-[#F5A623] p-4">
+        <div className="flex items-center gap-2 font-bold text-black">
+          <Link href="/auth/guard/vehicle-tracking" className="flex cursor-pointer items-center" aria-label="Go back">
             <ChevronLeft size={22} />
           </Link>
           <span className="text-lg">Scan QR Code</span>
         </div>
       </div>
 
-      <div className="bg-black flex-1 flex flex-col items-center justify-center gap-5 p-6">
-        <div
-          id="qr-reader"
-          className="w-full max-w-[280px] aspect-square rounded-[12px] overflow-hidden"
-          style={{ border: "2px solid #F5A623" }}
-        />
-        {error && <p className="text-red-400 text-sm">{error}</p>}
-        <p className="text-white/70 text-sm mb-4">Align the QR code inside frame.</p>
+      <div className="flex flex-1 flex-col items-center justify-center gap-5 bg-black p-6">
+        <div id="qr-reader" className="aspect-square w-full max-w-[280px] overflow-hidden rounded-[12px] border-2 border-[#F5A623]" />
+        {error && <p className="text-sm text-red-400">{error}</p>}
+        <p className="mb-4 text-sm text-white/70">Align the QR code inside frame.</p>
       </div>
     </div>
   );

@@ -1,15 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { attemptLogin } from "@/lib/authResult";
-import { Inter } from "next/font/google";
 import Image from "next/image";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
+import { attemptLogin } from "@/lib/authResult";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -29,41 +23,32 @@ export default function AdminLoginPage() {
     setLoading(false);
 
     if (result.ok) {
-      router.push("/admin/dashboard");
+      router.push("/auth/admin/dashboard");
     } else {
       setError(result.error.message);
     }
   }
 
   return (
-    <div
-      className={`${inter.variable} min-h-screen w-full flex items-center justify-center p-4`}
-      style={{ fontFamily: "var(--font-inter)", backgroundColor: "#F5A623" }}
-    >
-      <div
-        className="relative w-full max-w-[340px] rounded-[16px] p-[clamp(20px,4vw,32px)] pt-[clamp(36px,6vw,48px)] flex flex-col gap-3"
-        style={{ backgroundColor: "#F6F2D9" }}
-      >
-      <div className="absolute -top-8 left-1/2 -translate-x-1/2">
-        <div
-          className="w-16 h-16 rounded-full flex items-center justify-center shadow-md overflow-hidden"
-          style={{ backgroundColor: "#FFFFFF" }}
-        >
-          <Image
-            src="/parcomm-logo.png"
-            alt="ParComm"
-            width={48}
-            height={48}
-            className="object-contain translate-x-[2.5px]"
-          />
+    <div className="min-h-screen w-full bg-[#F5A623] p-4 font-sans flex items-center justify-center">
+      <div className="relative w-full max-w-[340px] rounded-[16px] bg-[#F6F2D9] p-[clamp(20px,4vw,32px)] pt-[clamp(36px,6vw,48px)] flex flex-col gap-3 shadow-sm">
+        <div className="absolute -top-8 left-1/2 -translate-x-1/2">
+          <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-white shadow-md">
+            <Image
+              src="/parcomm-logo.png"
+              alt="ParComm"
+              width={48}
+              height={48}
+              className="translate-x-[2.5px] object-contain"
+            />
+          </div>
         </div>
-      </div>
 
-        <h1 className="text-center font-bold text-[clamp(16px,2vw,19px)] text-black mt-2">
+        <h1 className="mt-2 text-center text-[clamp(16px,2vw,19px)] font-bold text-black">
           Administration Portal
         </h1>
 
-        <form onSubmit={handleLogin} className="flex flex-col gap-3 mt-2">
+        <form onSubmit={handleLogin} className="mt-2 flex flex-col gap-3">
           <div className="flex flex-col gap-1">
             <label className="text-[clamp(11px,1.3vw,13px)] font-medium text-black">
               Email Address
@@ -75,12 +60,7 @@ export default function AdminLoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="ParComm@cpu.edu.ph"
-              className="rounded-[8px] px-3 py-2 text-[clamp(11px,1.3vw,13px)] outline-none"
-              style={{
-                backgroundColor: "#FDFBF0",
-                border: "1px solid #E8C97A",
-                color: "#111111",
-              }}
+              className="rounded-[8px] border border-[#E8C97A] bg-[#FDFBF0] px-3 py-2 text-[clamp(11px,1.3vw,13px)] text-[#111111] outline-none placeholder:text-gray-400"
             />
           </div>
 
@@ -95,18 +75,12 @@ export default function AdminLoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password"
-                className="w-full rounded-[8px] px-3 py-2 pr-10 text-[clamp(11px,1.3vw,13px)] outline-none"
-                style={{
-                  backgroundColor: "#FDFBF0",
-                  border: "1px solid #E8C97A",
-                  color: "#111111",
-                }}
+                className="w-full rounded-[8px] border border-[#E8C97A] bg-[#FDFBF0] px-3 py-2 pr-10 text-[clamp(11px,1.3vw,13px)] text-[#111111] outline-none placeholder:text-gray-400"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute inset-y-0 right-0 flex items-center justify-center px-3"
-                style={{ color: "#5B5B5B" }}
+                className="absolute inset-y-0 right-0 flex items-center justify-center px-3 text-[#5B5B5B]"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
@@ -127,14 +101,13 @@ export default function AdminLoginPage() {
           </div>
 
           {error && (
-            <p className="text-red-600 text-[clamp(10px,1.1vw,12px)] text-center">{error}</p>
+            <p className="text-center text-[clamp(10px,1.1vw,12px)] text-red-600">{error}</p>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 rounded-[10px] py-2.5 font-semibold text-[clamp(12px,1.4vw,14px)] text-white disabled:opacity-60"
-            style={{ backgroundColor: "#F5A623" }}
+            className="mt-2 rounded-[10px] bg-[#F5A623] py-2.5 text-[clamp(12px,1.4vw,14px)] font-semibold text-white transition-opacity disabled:opacity-60"
           >
             {loading ? "Logging in..." : "Log in"}
           </button>

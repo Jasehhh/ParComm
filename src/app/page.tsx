@@ -3,12 +3,6 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Inter } from "next/font/google";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
 
 export default function FlashScreen() {
   const router = useRouter();
@@ -22,10 +16,7 @@ export default function FlashScreen() {
   }, [router]);
 
   return (
-    <div
-      className={`${inter.variable} min-h-screen w-full flex flex-col items-center justify-center gap-2`}
-      style={{ fontFamily: "var(--font-inter)", backgroundColor: "#F6F2D9" }}
-    >
+    <div className="min-h-screen w-full bg-[#F6F2D9] font-sans flex flex-col items-center justify-center gap-2">
       <Image
         src="/parcomm-logo-full.png"
         alt="ParComm"
@@ -35,7 +26,7 @@ export default function FlashScreen() {
         priority
       />
 
-      <p className="text-[clamp(11px,1.4vw,14px)] text-black/70 -mt-2">
+      <p className="-mt-2 text-[clamp(11px,1.4vw,14px)] text-black/70">
         Look for place. Occupy space.
       </p>
     </div>

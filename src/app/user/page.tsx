@@ -2,13 +2,7 @@
 
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { Inter } from "next/font/google";
-import { getStatus, getPercentFull } from "@/lib/parkingStatus";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
+import { getPercentFull, getStatus } from "@/lib/parkingStatus";
 
 type Lot = {
   id: string;
@@ -17,7 +11,6 @@ type Lot = {
   capacity: number;
 };
 
-// temporary: hardcoded data (need firebase)
 const LOCATIONS: Lot[] = [
   { id: "engineering", name: "Engineering", occupied: 33, capacity: 50 },
   { id: "church", name: "University Church", occupied: 12, capacity: 30 },
@@ -48,8 +41,8 @@ function Gauge({ occupied, capacity }: { occupied: number; capacity: number }) {
   const strokeDashoffset = circumference - filledLength;
 
   return (
-    <div className="relative w-[clamp(125px,38vw,190px)] aspect-square mx-auto">
-      <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
+    <div className="relative mx-auto aspect-square w-[clamp(125px,38vw,190px)]">
+      <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90">
         <circle cx="60" cy="60" r={radius} fill="none" stroke="#EFEAE0" strokeWidth="10" />
         <circle
           cx="60"
@@ -61,12 +54,12 @@ function Gauge({ occupied, capacity }: { occupied: number; capacity: number }) {
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset}
-          style={{ transition: "stroke-dashoffset 0.6s ease" }}
+          className="transition-[stroke-dashoffset] duration-600 ease-out"
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-[clamp(22px,5vw,34px)] leading-none font-bold text-black">{occupied}</span>
-        <span className="text-[clamp(8px,1.5vw,11px)] text-black mt-1">/ {capacity}</span>
+        <span className="text-[clamp(22px,5vw,34px)] font-bold leading-none text-black">{occupied}</span>
+        <span className="mt-1 text-[clamp(8px,1.5vw,11px)] text-black">/ {capacity}</span>
       </div>
     </div>
   );
@@ -78,22 +71,19 @@ function CapacityRow({ name, occupied, capacity }: Building) {
 
   return (
     <div className="rounded-[12px] bg-stone-200 p-[clamp(9px,1.5vw,14px)]">
-      <div className="flex justify-between items-center mb-[clamp(4px,0.7vw,7px)]">
+      <div className="mb-[clamp(4px,0.7vw,7px)] flex items-center justify-between">
         <span className="text-[clamp(10px,1.4vw,14px)] font-medium text-black">{name}</span>
         <span
-          className="text-[clamp(7px,0.9vw,10px)] font-medium px-[clamp(9px,1vw,12px)] py-[clamp(3px,0.4vw,5px)] rounded-full"
-          style={{ color: "#FFFFFF", backgroundColor: status.color }}
+          className="rounded-full px-[clamp(9px,1vw,12px)] py-[clamp(3px,0.4vw,5px)] text-[clamp(7px,0.9vw,10px)] font-medium text-white"
+          style={{ backgroundColor: status.color }}
         >
           {status.label}
         </span>
       </div>
-      <div className="h-[clamp(5px,0.6vw,8px)] rounded-full bg-stone-300 overflow-hidden">
-        <div
-          className="h-full rounded-full"
-          style={{ width: `${percentFull}%`, backgroundColor: status.color }}
-        />
+      <div className="h-[clamp(5px,0.6vw,8px)] overflow-hidden rounded-full bg-stone-300">
+        <div className="h-full rounded-full" style={{ width: `${percentFull}%`, backgroundColor: status.color }} />
       </div>
-      <div className="flex justify-between text-[clamp(7px,0.9vw,10px)] text-black mt-[clamp(2px,0.4vw,4px)]">
+      <div className="mt-[clamp(2px,0.4vw,4px)] flex justify-between text-[clamp(7px,0.9vw,10px)] text-black">
         <span>{occupied} / {capacity}</span>
         <span>{percentFull}%</span>
       </div>
@@ -109,44 +99,29 @@ export default function UserDashboardPage() {
   const availableSpaces = selectedLot.capacity - selectedLot.occupied;
 
   return (
-    <div
-      className={`${inter.variable} min-h-screen w-full p-4 pb-8`}
-      style={{ fontFamily: "var(--font-inter)", backgroundColor: "#F6F2D9" }}
-    >
-      {/* Header */}
-      <div className="text-center mb-[clamp(9px,1.5vw,14px)]">
-        <span className="font-bold text-[clamp(19px,2.5vw,28px)] leading-none">
-          <span style={{ color: "#F5A623" }}>Par</span>
-          <span style={{ color: "#D2691E" }}>Comm</span>
+    <div className="min-h-screen w-full bg-[#F6F2D9] p-4 pb-8 font-sans">
+      <div className="mb-[clamp(9px,1.5vw,14px)] text-center">
+        <span className="text-[clamp(19px,2.5vw,28px)] font-bold leading-none">
+          <span className="text-[#F5A623]">Par</span>
+          <span className="text-[#D2691E]">Comm</span>
         </span>
       </div>
 
-      {/* Location select */}
       <div className="relative mb-[clamp(8px,1.3vw,12px)]">
-        <div
-          className="w-full h-[clamp(29px,3vw,38px)] flex items-center justify-between rounded-full pl-[clamp(10px,1.5vw,15px)] pr-1 text-[clamp(9px,1vw,13px)] text-black"
-          style={{ backgroundColor: "#DCDCDD" }}
-        >
+        <div className="flex h-[clamp(29px,3vw,38px)] w-full items-center justify-between rounded-full bg-[#DCDCDD] pl-[clamp(10px,1.5vw,15px)] pr-1 text-[clamp(9px,1vw,13px)] text-black">
           <span>{selectedLot.name}</span>
           <button
             type="button"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="w-[clamp(24px,2.5vw,32px)] h-[clamp(24px,2.5vw,32px)] rounded-full flex cursor-pointer items-center justify-center shrink-0 border-0 p-0"
-            style={{ backgroundColor: "#F5A623" }}
+            className="flex h-[clamp(24px,2.5vw,32px)] w-[clamp(24px,2.5vw,32px)] shrink-0 cursor-pointer items-center justify-center rounded-full border-0 bg-[#F5A623] p-0"
             aria-label="Toggle location dropdown"
           >
-            <ChevronDown
-              size={15}
-              className={`text-white transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
-            />
+            <ChevronDown size={15} className={`text-white transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
           </button>
         </div>
 
         {isDropdownOpen && (
-          <div
-            className="absolute z-20 top-[calc(100%+5px)] left-0 w-full rounded-[14px] p-[5px] shadow-lg"
-            style={{ backgroundColor: "#DCDCDD" }}
-          >
+          <div className="absolute left-0 top-[calc(100%+5px)] z-20 w-full rounded-[14px] bg-[#DCDCDD] p-[5px] shadow-lg">
             {LOCATIONS.map((location) => (
               <button
                 type="button"
@@ -155,12 +130,11 @@ export default function UserDashboardPage() {
                   setSelectedLocationId(location.id);
                   setIsDropdownOpen(false);
                 }}
-                className="w-full h-[clamp(26px,2.8vw,35px)] text-left text-[clamp(9px,1vw,13px)] px-[clamp(10px,1.5vw,15px)] rounded-full mb-[1px] last:mb-0"
-                style={
+                className={`mb-[1px] h-[clamp(26px,2.8vw,35px)] w-full rounded-full px-[clamp(10px,1.5vw,15px)] text-left text-[clamp(9px,1vw,13px)] last:mb-0 ${
                   location.id === selectedLocationId
-                    ? { backgroundColor: "#F5A623", color: "#FFFFFF", fontWeight: 600 }
-                    : { color: "#000000" }
-                }
+                    ? "bg-[#F5A623] font-semibold text-white"
+                    : "text-black"
+                }`}
               >
                 {location.name}
               </button>
@@ -169,18 +143,13 @@ export default function UserDashboardPage() {
         )}
       </div>
 
-      {/* Status card */}
-      <div className="rounded-[12px] p-[clamp(10px,1.5vw,16px)] mb-[clamp(8px,1.3vw,12px)] text-center bg-stone-200">
-        <p className="text-[clamp(10px,1.3vw,15px)] font-semibold text-black leading-none">
-          Campus Parking Status
-        </p>
-        <p className="text-[clamp(7px,0.9vw,10px)] text-black mt-[2px] mb-[2px]">
-          Live Availability Monitor
-        </p>
+      <div className="mb-[clamp(8px,1.3vw,12px)] rounded-[12px] bg-stone-200 p-[clamp(10px,1.5vw,16px)] text-center">
+        <p className="text-[clamp(10px,1.3vw,15px)] font-semibold leading-none text-black">Campus Parking Status</p>
+        <p className="mt-[2px] mb-[2px] text-[clamp(7px,0.9vw,10px)] text-black">Live Availability Monitor</p>
 
         <Gauge occupied={selectedLot.occupied} capacity={selectedLot.capacity} />
 
-        <div className="flex justify-between mt-[clamp(2px,0.6vw,7px)] px-[clamp(1px,0.5vw,5px)]">
+        <div className="mt-[clamp(2px,0.6vw,7px)] flex justify-between px-[clamp(1px,0.5vw,5px)]">
           <div>
             <p className="text-[clamp(7px,0.8vw,10px)] text-black">Available Spaces</p>
             <p className="text-[clamp(10px,1.1vw,14px)] font-semibold text-black">{availableSpaces}</p>
@@ -192,7 +161,6 @@ export default function UserDashboardPage() {
         </div>
       </div>
 
-      {/* Building breakdown */}
       <div className="space-y-[clamp(6px,1vw,10px)]">
         {BUILDINGS.map((building) => (
           <CapacityRow key={building.name} {...building} />
