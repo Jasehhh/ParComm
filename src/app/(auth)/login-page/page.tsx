@@ -111,7 +111,7 @@ export default function DashboardLoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
+                placeholder="Enter your password"
                 className="w-full rounded-[12px] border border-[#D8CDA7] bg-[#E7E0CF] px-3 py-3 pr-11 text-[clamp(14px,1.8vw,16px)] text-[#111111] outline-none placeholder:text-black/50"
               />
               <button
