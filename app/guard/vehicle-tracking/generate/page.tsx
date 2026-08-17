@@ -1,10 +1,11 @@
+// app/guard/vehicle-tracking/generate/page.tsx
 "use client";
 
-import { useState, ChangeEvent } from "react";
+import { useState } from "react";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Inter } from "next/font/google";
-import { parsePlate, formatPlateInput, type PlateError } from "./plate";
+import { parsePlate, type PlateError } from "./plate";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -15,13 +16,6 @@ export default function GenerateQRCodePage() {
   const router = useRouter();
   const [plateNumber, setPlateNumber] = useState("");
   const [error, setError] = useState<PlateError | null>(null);
-
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatPlateInput(e.target.value);
-    setPlateNumber(formatted);
-
-    if (error) setError(null);
-  };
 
   const handleGenerate = () => {
     const result = parsePlate(plateNumber);
@@ -53,16 +47,16 @@ export default function GenerateQRCodePage() {
       </div>
 
       <div className="flex-1 flex items-center justify-center w-full">
-        <div className="w-full max-w-105 bg-[#FDFBF0] rounded-2xl p-[clamp(20px,4vw,28px)] shadow-sm">
+        <div className="w-full max-w-[420px] bg-[#FDFBF0] rounded-[16px] p-[clamp(20px,4vw,28px)] shadow-sm">
           <label className="block text-[clamp(11px,1.3vw,13px)] font-bold text-gray-800 mb-2">
             Vehicle Plate Number
           </label>
           <input
             type="text"
             value={plateNumber}
-            onChange={handleInputChange}
-            placeholder="E.G. ABC-1234"
-            className="w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-[clamp(11px,1.3vw,13px)] text-gray-900 mb-1 font-mono tracking-wider uppercase placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400"
+            onChange={(e) => setPlateNumber(e.target.value)}
+            placeholder="E.G. ABC 1234"
+            className="w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-[clamp(11px,1.3vw,13px)] text-gray-900 mb-1 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400"
           />
           {error && (
             <p className="text-xs text-red-600 mb-3">{error.message}</p>
