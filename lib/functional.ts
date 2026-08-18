@@ -1,5 +1,5 @@
 // lib/functional.ts
-
+import { Result } from "@/lib/types";
 /**
  * pipe — Higher-Order Function + Function Composition
  * Takes multiple single-argument functions and combines them into one function
@@ -11,11 +11,8 @@ export const pipe = <T>(...fns: Array<(arg: T) => T>) =>
 
 /**
  * Result type — shared shape for Functional Error Handling
- * (matches the one used in plate.ts and authResult.ts)
+ * (matches the one used plate.ts in authResult.ts)
  */
-export type Result<T, E> =
-  | { ok: true; value: T }
-  | { ok: false; error: E };
 
 /**
  * andThen — Higher-Order Function

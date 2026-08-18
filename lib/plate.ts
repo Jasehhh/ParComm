@@ -1,10 +1,7 @@
 // app/guard/vehicle-tracking/generate/plate.ts
-import { pipe, combineValidators, type Result } from "@/lib/functional";
-
-export type PlateError =
-  | { type: "EMPTY"; message: string }
-  | { type: "TOO_SHORT"; message: string }
-  | { type: "INVALID_CHARS"; message: string };
+import { pipe, combineValidators} from "@/lib/functional";
+import { Result } from "@/lib/types";
+import { PlateError } from "@/lib/types";
 
 // --- Pure normalization, composed via shared pipe() ---
 const trimPlate = (raw: string): string => raw.trim();

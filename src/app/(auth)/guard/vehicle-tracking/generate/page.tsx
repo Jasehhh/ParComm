@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { parsePlate, type PlateError } from "./plate";
+import { parsePlate} from "@/lib/plate";
+import { PlateError } from "@/lib/types";
 
 export default function GenerateQRCodePage() {
   const router = useRouter();
