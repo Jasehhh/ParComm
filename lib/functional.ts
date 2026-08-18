@@ -1,5 +1,5 @@
 // lib/functional.ts
-import { Result } from "@/lib/types";
+import { Result } from "@/lib/types/types";
 /**
  * pipe — Higher-Order Function + Function Composition
  * Takes multiple single-argument functions and combines them into one function

@@ -1,7 +1,7 @@
 // app/guard/vehicle-tracking/generate/plate.ts
 import { pipe, combineValidators} from "@/lib/functional";
-import { Result } from "@/lib/types";
-import { PlateError } from "@/lib/types";
+import { Result } from "@/lib/types/types";
+import { PlateError } from "@/lib/types/types";
 
 // --- Pure normalization, composed via shared pipe() ---
 const trimPlate = (raw: string): string => raw.trim();
