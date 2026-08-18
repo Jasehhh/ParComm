@@ -1,26 +1,36 @@
-// lib/services/db.ts
-import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
+
+import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query, orderBy } from "firebase/firestore";
 import app from "@/lib/firebase";
 import { ActivityLogRecord, ParkingArea } from "@/lib/types/schema";
 
 const db = getFirestore(app);
 
-// Higher-order FOR ACTIVITY RECORD
-export const createActivityLog = async (recordData: ActivityLogRecord) => {
-  try {
-    const logCollection = collection(db, "activity_log");
-    
-    //timestamp sa server side, ensuring immutability
-    const docRef = await addDoc(logCollection, {
-      ...recordData,
-      timeStamp: serverTimestamp() 
+export const subscribeToActivityLogs = (callback: (logs: any[]) => void) => {
+  const logCollection = collection(db, 'activity_log');
+  
+  const unsubscribe = onSnapshot(logCollection, (snapshot) => {
+    const fetchedLogs = snapshot.docs.map(doc => {
+      const data = doc.data();
+      
+      let formattedTime = "00:00:00";
+      if (data.time_stamp && typeof data.time_stamp.toDate === 'function') {
+        const dateObj = data.time_stamp.toDate();
+        formattedTime = dateObj.toLocaleTimeString('en-US', { hour12: false });
+      }
+
+      return {
+        id: doc.id.substring(0, 6).toUpperCase(),
+        plate: data.plate_number || 'Unknown', 
+        time: formattedTime,
+        status: data.status || 'Unknown',
+        location: data.location || '-' 
+      };
     });
-    
-    return docRef.id;
-  } catch (error) {
-    console.error("Error writing to database:", error);
-    throw error;
-  }
+
+    callback(fetchedLogs);
+  });
+
+  return unsubscribe;
 };
 // for parking view
 export const subscribeToParkingAreas = (callback: (areas: ParkingArea[]) => void) => {
@@ -48,4 +58,17 @@ export const subscribeToParkingAreas = (callback: (areas: ParkingArea[]) => void
 
   // Return the unsubscribe function so React can clean it up
   return unsubscribe;
+};
+
+
+export const createParkingTicket = async (qrId: string, plateNumber: string) => {
+  const logCollection = collection(db, "activity_log");
+  
+  await addDoc(logCollection, {
+    qrId: qrId,
+    plate_number: plateNumber,
+    status: "Active",
+    location: "",
+    time_stamp: serverTimestamp() 
+  });
 };

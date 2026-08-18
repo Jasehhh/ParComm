@@ -54,6 +54,7 @@ body {
   }
 }
 
+
 .animate-grow-logo {
   animation: grow-logo 1.5s ease-out both;
 }

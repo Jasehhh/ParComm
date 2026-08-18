@@ -1,37 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDown, ScanQrCode } from "lucide-react";
 import Link from "next/link";
 import { getPercentFull, getStatus } from "@/lib/parkingStatus";
-
-type Lot = {
-  id: string;
-  name: string;
-  occupied: number;
-  capacity: number;
-};
-
-const LOCATIONS: Lot[] = [
-  { id: "engineering", name: "Engineering", occupied: 40, capacity: 50 },
-  { id: "church", name: "University Church", occupied: 12, capacity: 30 },
-  { id: "rmh", name: "RMH", occupied: 8, capacity: 20 },
-  { id: "hll3", name: "HLL III", occupied: 15, capacity: 25 },
-  { id: "gym", name: "University Gym", occupied: 38, capacity: 40 },
-  { id: "weston", name: "Weston Hall", occupied: 5, capacity: 20 },
-  { id: "field", name: "Elementary Field", occupied: 2, capacity: 15 },
-];
-
-type Building = {
-  name: string;
-  occupied: number;
-  capacity: number;
-};
-
-const BUILDINGS: Building[] = [
-  { name: "Engineering Building", occupied: 10, capacity: 10 },
-  { name: "University Gym", occupied: 30, capacity: 40 },
-];
+import { subscribeToParkingAreas } from "@/lib/services/db";
+import type { ParkingArea } from "@/lib/types/schema";
 
 function Gauge({ occupied, capacity }: { occupied: number; capacity: number }) {
   const percentFull = getPercentFull(occupied, capacity);
@@ -66,7 +40,7 @@ function Gauge({ occupied, capacity }: { occupied: number; capacity: number }) {
   );
 }
 
-function CapacityRow({ name, occupied, capacity }: Building) {
+function CapacityRow({ name, occupied, capacity }: ParkingArea) {
   const percentFull = getPercentFull(occupied, capacity);
   const status = getStatus(percentFull);
 
@@ -93,11 +67,38 @@ function CapacityRow({ name, occupied, capacity }: Building) {
 }
 
 export default function GuardDashboardPage() {
-  const [selectedLocationId, setSelectedLocationId] = useState<string>(LOCATIONS[0].id);
+  const [parkingAreas, setParkingAreas] = useState<ParkingArea[]>([]);
+  const [selectedLocationId, setSelectedLocationId] = useState<string>("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const selectedLot = LOCATIONS.find((l) => l.id === selectedLocationId)!;
-  const availableSpaces = selectedLot.capacity - selectedLot.occupied;
+  useEffect(() => {
+    const unsubscribe = subscribeToParkingAreas((liveData) => {
+      setParkingAreas(liveData);
+      
+      setSelectedLocationId(currentId => {
+        if (!currentId && liveData.length > 0) {
+          return liveData[0].id;
+        }
+        return currentId;
+      });
+      
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const selectedLot = parkingAreas.find((location) => location.id === selectedLocationId);
+  const availableSpaces = selectedLot ? selectedLot.capacity - selectedLot.occupied : 0;
+
+  if (loading || !selectedLot) {
+    return (
+      <div className="min-h-screen w-full bg-[#F6F2D9] flex items-center justify-center font-sans">
+        <div className="text-[#D2691E] text-xl font-bold animate-pulse">Syncing Guard Data...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen w-full bg-[#F6F2D9] p-4 pb-8 font-sans">
@@ -126,7 +127,7 @@ export default function GuardDashboardPage() {
 
         {isDropdownOpen && (
           <div className="absolute left-0 top-[calc(100%+5px)] z-20 w-full rounded-[14px] bg-[#DCDCDD] p-[5px] shadow-lg">
-            {LOCATIONS.map((location) => (
+            {parkingAreas.map((location) => (
               <button
                 type="button"
                 key={location.id}
@@ -170,8 +171,8 @@ export default function GuardDashboardPage() {
       </div>
 
       <div className="space-y-[clamp(6px,1vw,10px)]">
-        {BUILDINGS.map((building) => (
-          <CapacityRow key={building.name} {...building} />
+        {parkingAreas.map((location) => (
+          <CapacityRow key={location.id} {...location} />
         ))}
       </div>
 

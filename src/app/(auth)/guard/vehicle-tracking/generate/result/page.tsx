@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import { ChevronLeft, Share2 } from "lucide-react";
+import { Suspense, useState, useEffect } from "react";
+import { ChevronLeft, Printer } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -17,24 +17,24 @@ const formatValidUntil = (date: Date): string =>
 function ResultContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const plate = searchParams.get("plate") ?? "";
+  
+  const ticketId = searchParams.get("ticketId") ?? "ERROR";
+  const [validUntil, setValidUntil] = useState("");
 
-  const [ticketId] = useState(
-    () => `GUEST-${String(Math.floor(Math.random() * 1_000_000)).padStart(6, "0")}`
-  );
-  const [validUntil] = useState(
-    () => formatValidUntil(new Date(Date.now() + 6 * 60 * 60 * 1000))
-  );
+  useEffect(() => {
+    setValidUntil(formatValidUntil(new Date(Date.now() + 10 * 60 * 60 * 1000)));
+  }, []);
 
-  const handleShare = async () => {
-    if (navigator.share) {
-      await navigator.share({ title: "ParComm QR Code", text: plate });
-    }
+  const handlePrint = () => {
+    window.print();
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#F6F2D9] p-4 font-sans flex flex-col gap-[clamp(14px,2.5vw,20px)]">
-      <div className="-mx-4 -mt-4 flex items-center gap-2 bg-[#F5A623] px-4 py-4 font-bold text-black">
+    // Added 'print:bg-white' so it doesn't print a giant yellow block
+    <div className="min-h-screen w-full bg-[#F5A623] print:bg-white p-4 font-sans flex flex-col justify-between items-center">
+      
+      {/* Added 'print:hidden' so the back header disappears on print */}
+      <div className="w-full flex items-center gap-2 px-4 py-4 font-bold text-black print:hidden">
         <button
           type="button"
           onClick={() => router.push("/guard/vehicle-tracking/generate")}
@@ -46,26 +46,29 @@ function ResultContent() {
         <span className="text-[clamp(15px,2vw,19px)]">Generate QR Code</span>
       </div>
 
-      <div className="flex w-full flex-1 items-center justify-center">
-        <div className="flex w-full max-w-[420px] flex-col items-center rounded-[16px] bg-[#FDFBF0] p-[clamp(20px,4vw,28px)] shadow-sm">
+      <div className="flex w-full flex-1 items-center justify-center my-auto">
+        <div className="flex w-full max-w-[320px] flex-col items-center rounded-[16px] bg-[#FDFBF0] print:bg-white p-[clamp(24px,5vw,32px)] shadow-lg print:shadow-none">
           <p className="text-2xl font-bold leading-none">
             <span className="text-[#F5A623]">Par</span>
             <span className="text-[#D2691E]">Comm</span>
           </p>
-          <p className="mt-1 mb-4 text-xs text-gray-600">Look for place. Occupy space.</p>
-          <QRCodeSVG value={plate} size={180} />
-          <p className="mt-4 text-sm font-bold text-gray-900">{ticketId}</p>
-          <p className="text-xs text-gray-600">Valid Until: {validUntil}</p>
+          <p className="mt-1 mb-6 text-[10px] font-medium text-gray-800">Look for place. Occupy space.</p>
+          
+          <QRCodeSVG value={ticketId} size={160} />
+          
+          <p className="mt-6 text-sm font-bold text-gray-900">{ticketId}</p>
+          <p className="mt-1 text-[10px] font-medium text-gray-600">Valid Until: {validUntil}</p>
         </div>
       </div>
 
+      {/* Added 'print:hidden' so the black print button doesn't print out */}
       <button
         type="button"
-        onClick={handleShare}
-        className="mx-auto flex items-center gap-2 pb-4 text-[clamp(11px,1.3vw,13px)] font-medium text-gray-800"
+        onClick={handlePrint}
+        className="mx-auto mb-8 flex w-full max-w-[320px] items-center justify-center gap-2 rounded-full bg-[#1A1A1A] py-3.5 text-[clamp(13px,1.5vw,15px)] font-semibold text-white transition-colors hover:bg-black print:hidden"
       >
-        <Share2 size={16} />
-        <span>Share QR</span>
+        <Printer size={18} />
+        <span>Print QR</span>
       </button>
     </div>
   );
@@ -73,7 +76,11 @@ function ResultContent() {
 
 export default function GenerateQRCodeResultPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={
+      <div className="min-h-screen w-full bg-[#F5A623] flex items-center justify-center">
+        <p className="font-bold text-black animate-pulse">Loading Ticket...</p>
+      </div>
+    }>
       <ResultContent />
     </Suspense>
   );

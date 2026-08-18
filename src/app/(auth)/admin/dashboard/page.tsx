@@ -5,40 +5,9 @@ import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { getPercentFull, getStatus } from "@/lib/parkingStatus";
-
-type ActivityRow = {
-  id: string;
-  plate: string;
-  time: string;
-  status: "Parked" | "Exited";
-  location: string;
-};
-
-const ACTIVITY_LOG: ActivityRow[] = [
-  { id: "001", plate: "ABC 1234", time: "00:00:00", status: "Parked", location: "Engi. Bldg." },
-  { id: "002", plate: "ABC 1234", time: "00:00:00", status: "Exited", location: "" },
-  { id: "003", plate: "ABC 1234", time: "00:00:00", status: "Parked", location: "Engi. Bldg." },
-  { id: "004", plate: "ABC 1234", time: "00:00:00", status: "Exited", location: "" },
-  { id: "005", plate: "ABC 1234", time: "00:00:00", status: "Parked", location: "Engi. Bldg." },
-  { id: "006", plate: "ABC 1234", time: "00:00:00", status: "Exited", location: "" },
-  { id: "007", plate: "ABC 1234", time: "00:00:00", status: "Parked", location: "Engi. Bldg." },
-  { id: "008", plate: "ABC 1234", time: "00:00:00", status: "Exited", location: "" },
-  { id: "009", plate: "ABC 1234", time: "00:00:00", status: "Parked", location: "Engi. Bldg." },
-  { id: "010", plate: "ABC 1234", time: "00:00:00", status: "Exited", location: "" },
-];
-
-type Building = {
-  name: string;
-  occupied: number;
-  capacity: number;
-};
-
-const BUILDINGS: Building[] = [
-  { name: "Engineering Building", occupied: 10, capacity: 10 },
-  { name: "University Gym", occupied: 30, capacity: 40 },
-];
-
-const CAMPUS_TOTAL = { occupied: 40, capacity: 50 };
+import { subscribeToParkingAreas, subscribeToActivityLogs } from "@/lib/services/db";
+import type { ParkingArea } from "@/lib/types/schema";
+ import type { ActivityRow } from "@/lib/types/types";
 
 function Gauge({ occupied, capacity }: { occupied: number; capacity: number }) {
   const percentFull = getPercentFull(occupied, capacity);
@@ -73,7 +42,7 @@ function Gauge({ occupied, capacity }: { occupied: number; capacity: number }) {
   );
 }
 
-function CapacityRow({ name, occupied, capacity }: Building) {
+function CapacityRow({ name, occupied, capacity }: ParkingArea) {
   const percentFull = getPercentFull(occupied, capacity);
   const status = getStatus(percentFull);
 
@@ -99,10 +68,16 @@ function CapacityRow({ name, occupied, capacity }: Building) {
 export default function AdminDashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  
+  // Real-time Database State gin ai ko nlg ni guys hhehe
+  const [activities, setActivities] = useState<ActivityRow[]>([]);
+  const [parkingAreas, setParkingAreas] = useState<ParkingArea[]>([]);
+  
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    // 1. Auth Listener
+    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       if (!firebaseUser) {
         router.push("/login-page");
       } else {
@@ -111,7 +86,22 @@ export default function AdminDashboardPage() {
       setCheckingAuth(false);
     });
 
-    return () => unsubscribe();
+    // 2. Parking Areas Listener (For the bars and total gauge)
+    const unsubscribeParking = subscribeToParkingAreas((liveData) => {
+      setParkingAreas(liveData);
+    });
+
+    // 3. Activity Log Listener (For the main table)
+    const unsubscribeLogs = subscribeToActivityLogs((liveLogs) => {
+      setActivities(liveLogs);
+    });
+
+    // Cleanup all 3 listeners when admin logs out or closes page
+    return () => {
+      unsubscribeAuth();
+      unsubscribeParking();
+      unsubscribeLogs();
+    };
   }, [router]);
 
   async function handleLogout() {
@@ -119,10 +109,20 @@ export default function AdminDashboardPage() {
     router.push("/login-page");
   }
 
+  // Dynamically calculate the campus totals based on real-time data
+  const campusTotal = parkingAreas.reduce(
+    (acc, area) => {
+      acc.occupied += area.occupied;
+      acc.capacity += area.capacity;
+      return acc;
+    },
+    { occupied: 0, capacity: 0 }
+  );
+
   if (checkingAuth || !user) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-[#F6F2D9]">
-        <p className="text-sm text-black">Loading...</p>
+        <div className="text-[#D2691E] text-xl font-bold animate-pulse">Verifying Admin...</div>
       </div>
     );
   }
@@ -159,15 +159,23 @@ export default function AdminDashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {ACTIVITY_LOG.map((row, i) => (
-                  <tr key={row.id} className={i % 2 === 0 ? "bg-[#FBBF4D]" : "bg-transparent"}>
-                    <td className="px-3 py-1.5 text-black">{row.id}</td>
-                    <td className="px-3 py-1.5 text-black">{row.plate}</td>
-                    <td className="px-3 py-1.5 text-black">{row.time}</td>
-                    <td className="px-3 py-1.5 text-black">{row.status}</td>
-                    <td className="px-3 py-1.5 text-black">{row.location}</td>
+                {activities.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-3 py-8 text-center text-black/70">
+                      No activity logs found.
+                    </td>
                   </tr>
-                ))}
+                ) : (
+                  activities.map((row, i) => (
+                    <tr key={row.id} className={i % 2 === 0 ? "bg-[#FBBF4D]" : "bg-transparent"}>
+                      <td className="px-3 py-1.5 text-black font-mono">{row.id}</td>
+                      <td className="px-3 py-1.5 text-black uppercase">{row.plate}</td>
+                      <td className="px-3 py-1.5 text-black font-mono">{row.time}</td>
+                      <td className="px-3 py-1.5 text-black">{row.status}</td>
+                      <td className="px-3 py-1.5 text-black">{row.location}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -182,26 +190,26 @@ export default function AdminDashboardPage() {
               Live Availability Monitor
             </p>
 
-            <Gauge occupied={CAMPUS_TOTAL.occupied} capacity={CAMPUS_TOTAL.capacity} />
+            <Gauge occupied={campusTotal.occupied} capacity={campusTotal.capacity} />
 
             <div className="mt-2 flex justify-between px-1">
               <div>
                 <p className="text-[clamp(7px,0.8vw,9px)] text-black">Available Spaces</p>
                 <p className="text-[clamp(10px,1.1vw,13px)] font-semibold text-black">
-                  {CAMPUS_TOTAL.capacity - CAMPUS_TOTAL.occupied}
+                  {campusTotal.capacity > 0 ? campusTotal.capacity - campusTotal.occupied : 0}
                 </p>
               </div>
               <div>
                 <p className="text-[clamp(7px,0.8vw,9px)] text-black">Total Capacity</p>
                 <p className="text-[clamp(10px,1.1vw,13px)] font-semibold text-black">
-                  {CAMPUS_TOTAL.capacity}
+                  {campusTotal.capacity}
                 </p>
               </div>
             </div>
           </div>
 
-          {BUILDINGS.map((b) => (
-            <CapacityRow key={b.name} {...b} />
+          {parkingAreas.map((b) => (
+            <CapacityRow key={b.id} {...b} />
           ))}
         </div>
       </div>
