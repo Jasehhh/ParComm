@@ -13,6 +13,22 @@ export default function GenerateQRCodePage() {
   const [error, setError] = useState<PlateError | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  const handlePlateChange = (value: string) => {
+    const normalized = value.toUpperCase();
+    const letters = (normalized.match(/[A-Z]/g) ?? []).slice(0, 3).join("");
+    const numbers = (normalized.match(/[0-9]/g) ?? []).slice(0, 4).join("");
+    const formatted = letters.length === 3 ? `${letters}-${numbers}` : letters;
+
+    setPlateNumber(formatted);
+  };
+
+  const handlePlateKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Backspace" && plateNumber.endsWith("-")) {
+      event.preventDefault();
+      setPlateNumber(plateNumber.slice(0, -1));
+    }
+  };
+
   const handleGenerate = async () => {
     const result = parsePlate(plateNumber);
 
@@ -33,7 +49,7 @@ export default function GenerateQRCodePage() {
           ticketId: newTicketId 
         });
         
-        router.push(`/auth/guard/vehicle-tracking/generate/result?${params.toString()}`);
+        router.push(`/guard/vehicle-tracking/generate/result?${params.toString()}`);
       } catch (err) {
         console.error("Failed to generate ticket:", err);
         setError({ message: "Failed to connect to database." } as PlateError);
@@ -42,7 +58,7 @@ export default function GenerateQRCodePage() {
       }
     } else {
       setError(result.error);
-    }
+    } 
   };
 
   return (
@@ -68,9 +84,12 @@ export default function GenerateQRCodePage() {
           <input
             type="text"
             value={plateNumber}
-            onChange={(e) => setPlateNumber(e.target.value)}
+            onChange={(e) => handlePlateChange(e.target.value)}
+            onKeyDown={handlePlateKeyDown}
+            maxLength={8}
+            pattern="[A-Za-z]{3}-[0-9]{4}"
             disabled={isGenerating}
-            placeholder="E.G. ABC 1234"
+            placeholder="E.G. ABC-1234"
             className="mb-1 w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-[clamp(11px,1.3vw,13px)] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400 disabled:opacity-50"
           />
           {error && <p className="mb-3 text-xs text-red-600">{error.message}</p>}

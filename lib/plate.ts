@@ -21,16 +21,16 @@ const checkMinLength = (plate: string): Result<string, PlateError> =>
     ? { ok: true, value: plate }
     : { ok: false, error: { type: "TOO_SHORT", message: "Plate number is too short." } };
 
-const checkValidChars = (plate: string): Result<string, PlateError> =>
-  /^[A-Z0-9 ]+$/.test(plate)
+const checkValidFormat = (plate: string): Result<string, PlateError> =>
+  /^[A-Z]{3}-[0-9]{4}$/.test(plate)
     ? { ok: true, value: plate }
     : {
         ok: false,
-        error: { type: "INVALID_CHARS", message: "Only letters, numbers, and spaces are allowed." },
+        error: { type: "INVALID_FORMAT", message: "Plate number must follow the format ABC-1234." },
       };
 
 // Composed pipeline, using shared combineValidators()
-const validatePlate = combineValidators([checkNotEmpty, checkMinLength, checkValidChars]);
+const validatePlate = combineValidators([checkNotEmpty, checkMinLength, checkValidFormat]);
 
 export const parsePlate = (raw: string): Result<string, PlateError> =>
   validatePlate(normalizePlate(raw));

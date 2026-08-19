@@ -6,13 +6,12 @@ import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { getPercentFull, getStatus } from "@/lib/parkingStatus";
 import { subscribeToParkingAreas, subscribeToActivityLogs } from "@/lib/services/db";
-import type { ParkingArea } from "@/lib/types/schema";
- import type { ActivityRow } from "@/lib/types/types";
+import type { ActivityLogRecord, ParkingArea } from "@/lib/types/schema";
 
 function Gauge({ occupied, capacity }: { occupied: number; capacity: number }) {
   const percentFull = getPercentFull(occupied, capacity);
   const ringColor = getStatus(percentFull).color;
-  const radius = 54;
+  const radius = 54
   const circumference = 2 * Math.PI * radius;
   const filledLength = (percentFull / 100) * circumference;
   const strokeDashoffset = circumference - filledLength;
@@ -69,8 +68,8 @@ export default function AdminDashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   
-  // Real-time Database State gin ai ko nlg ni guys hhehe
-  const [activities, setActivities] = useState<ActivityRow[]>([]);
+  // Real-time Database State
+  const [activities, setActivities] = useState<ActivityLogRecord[]>([]);
   const [parkingAreas, setParkingAreas] = useState<ParkingArea[]>([]);
   
   const router = useRouter();
@@ -167,12 +166,13 @@ export default function AdminDashboardPage() {
                   </tr>
                 ) : (
                   activities.map((row, i) => (
-                    <tr key={row.id} className={i % 2 === 0 ? "bg-[#FBBF4D]" : "bg-transparent"}>
-                      <td className="px-3 py-1.5 text-black font-mono">{row.id}</td>
-                      <td className="px-3 py-1.5 text-black uppercase">{row.plate}</td>
-                      <td className="px-3 py-1.5 text-black font-mono">{row.time}</td>
+                    // FIX: Unique key combining ID and index prevents React duplication crashes
+                    <tr key={`${row.qrId}-${i}`} className={i % 2 === 0 ? "bg-[#FBBF4D]" : "bg-transparent"}>
+                      <td className="px-3 py-1.5 text-black font-mono">{row.qrId}</td>
+                      <td className="px-3 py-1.5 text-black uppercase">{row.plate_number}</td>
+                      <td className="px-3 py-1.5 text-black font-mono">{row.time_stamp}</td>
                       <td className="px-3 py-1.5 text-black">{row.status}</td>
-                      <td className="px-3 py-1.5 text-black">{row.location}</td>
+                      <td className="px-3 py-1.5 text-black capitalize">{row.location}</td>
                     </tr>
                   ))
                 )}
