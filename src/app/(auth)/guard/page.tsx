@@ -1,8 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import { ChevronDown, ScanQrCode } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { auth } from "@/lib/firebase";
 import { getPercentFull, getStatus } from "@/lib/parkingStatus";
 import { subscribeToParkingAreas } from "@/lib/services/db";
 import type { ParkingArea } from "@/lib/types/schema";
@@ -67,10 +70,27 @@ function CapacityRow({ name, occupied, capacity }: ParkingArea) {
 }
 
 export default function GuardDashboardPage() {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [parkingAreas, setParkingAreas] = useState<ParkingArea[]>([]);
   const [selectedLocationId, setSelectedLocationId] = useState<string>("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      const email = firebaseUser?.email?.toLowerCase();
+      if (!firebaseUser || email !== "guard@cpu.edu.ph") {
+        router.push("/login-page");
+      } else {
+        setUser(firebaseUser);
+      }
+      setCheckingAuth(false);
+    });
+
+    return () => unsubscribe();
+  }, [router]);
 
   useEffect(() => {
     const unsubscribe = subscribeToParkingAreas((liveData) => {
@@ -92,7 +112,12 @@ export default function GuardDashboardPage() {
   const selectedLot = parkingAreas.find((location) => location.id === selectedLocationId);
   const availableSpaces = selectedLot ? selectedLot.capacity - selectedLot.occupied : 0;
 
-  if (loading || !selectedLot) {
+  async function handleLogout() {
+    await signOut(auth);
+    router.push("/login-page");
+  }
+
+  if (checkingAuth || !user || loading || !selectedLot) {
     return (
       <div className="min-h-screen w-full bg-[#F6F2D9] flex items-center justify-center font-sans">
         <div className="text-[#D2691E] text-xl font-bold animate-pulse">Syncing Guard Data...</div>
@@ -102,11 +127,18 @@ export default function GuardDashboardPage() {
 
   return (
     <div className="relative min-h-screen w-full bg-[#F6F2D9] p-4 pb-8 font-sans">
-      <div className="mb-[clamp(9px,1.5vw,14px)] text-center">
+      <div className="mb-[clamp(9px,1.5vw,14px)] flex items-center justify-between">
         <span className="text-[clamp(19px,2.5vw,28px)] font-bold leading-none">
           <span className="text-[#F5A623]">Par</span>
           <span className="text-[#D2691E]">Comm</span>
         </span>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="text-[clamp(11px,1.2vw,13px)] font-semibold text-red-600"
+        >
+          Logout
+        </button>
       </div>
 
       <div className="relative mb-[clamp(8px,1.3vw,12px)]">
