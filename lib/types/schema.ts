@@ -1,7 +1,8 @@
 export interface ActivityLogRecord {
-  qrId: string; //primary key
+  qrId: string;
   plate_number: string;
-  status: 'Parked' | 'Exited';
+  time_stamp: string;
+  status: 'Active' | 'Parked' | 'Exited';
   location: string;
 }
 
