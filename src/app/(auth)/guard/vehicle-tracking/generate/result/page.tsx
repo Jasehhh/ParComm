@@ -37,7 +37,7 @@ function ResultContent() {
       <div className="w-full flex items-center gap-2 px-4 py-4 font-bold text-black print:hidden">
         <button
           type="button"
-          onClick={() => router.push("/guard/vehicle-tracking/generate")}
+          onClick={() => router.back()}
           className="flex cursor-pointer items-center"
           aria-label="Go back"
         >
