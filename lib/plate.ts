@@ -1,5 +1,5 @@
 // app/guard/vehicle-tracking/generate/plate.ts
-import { pipe, combineValidators} from "@/lib/functional";
+import { pipe, combineValidators, converge } from "@/lib/functional";
 import { Result } from "@/lib/types/types";
 import { PlateError } from "@/lib/types/types";
 
@@ -34,3 +34,28 @@ const validatePlate = combineValidators([checkNotEmpty, checkMinLength, checkVal
 
 export const parsePlate = (raw: string): Result<string, PlateError> =>
   validatePlate(normalizePlate(raw));
+
+// --- Pure input formatting, composed the same way ---
+// Each step is a small total function; converge() splits the normalized text
+// into its letter and digit parts and joins them back into ABC-1234 shape.
+const lettersOf = (plate: string): string =>
+  (plate.match(/[A-Z]/g) ?? []).slice(0, 3).join("");
+
+const digitsOf = (plate: string): string =>
+  (plate.match(/[0-9]/g) ?? []).slice(0, 4).join("");
+
+const joinPlate = (letters: string, digits: string): string =>
+  letters.length === 3 ? `${letters}-${digits}` : letters;
+
+/**
+ * Formats raw keystrokes into a partial plate, inserting the dash once three
+ * letters are present. Pure: same input always yields the same output.
+ */
+export const formatPlateInput = pipe<string>(
+  upperCasePlate,
+  converge(joinPlate, lettersOf, digitsOf)
+);
+
+/** True when the text is a complete, well-formed plate. */
+export const isCompletePlate = (plate: string): boolean =>
+  /^[A-Z]{3}-[0-9]{4}$/.test(plate);

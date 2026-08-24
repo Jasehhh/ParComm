@@ -3,12 +3,10 @@
 import { useState } from "react";
 import { AlertCircle, Check, Loader2, QrCode } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { parsePlate } from "@/lib/plate";
+import { parsePlate, formatPlateInput, isCompletePlate } from "@/lib/plate";
 import { PlateError } from "@/lib/types/types";
 import { createParkingTicket } from "@/lib/services/db";
 import { AppBar } from "@/components/AppBar";
-
-const PLATE_PATTERN = /^[A-Z]{3}-[0-9]{4}$/;
 
 /** Turn a Firestore failure into something a guard can act on. */
 function describeWriteFailure(err: unknown): string {
@@ -34,12 +32,7 @@ export default function GenerateQRCodePage() {
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handlePlateChange = (value: string) => {
-    const normalized = value.toUpperCase();
-    const letters = (normalized.match(/[A-Z]/g) ?? []).slice(0, 3).join("");
-    const numbers = (normalized.match(/[0-9]/g) ?? []).slice(0, 4).join("");
-    const formatted = letters.length === 3 ? `${letters}-${numbers}` : letters;
-
-    setPlateNumber(formatted);
+    setPlateNumber(formatPlateInput(value));
     if (error) setError(null);
     if (writeError) setWriteError("");
   };
@@ -84,7 +77,7 @@ export default function GenerateQRCodePage() {
     }
   };
 
-  const isComplete = PLATE_PATTERN.test(plateNumber);
+  const isComplete = isCompletePlate(plateNumber);
 
   return (
     <div className="bg-sand-50 flex min-h-screen w-full flex-col">

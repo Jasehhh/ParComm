@@ -6,7 +6,7 @@ import { LogOut, QrCode, ScanLine } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
-import { getPercentFull, getStatus } from "@/lib/parkingStatus";
+import { freeSpaces, getPercentFull, getStatus, totalOccupancy } from "@/lib/parkingStatus";
 import { subscribeToParkingAreas } from "@/lib/services/db";
 import type { ParkingArea } from "@/lib/types/schema";
 import { LotCard } from "@/components/LotCard";
@@ -57,17 +57,7 @@ export default function GuardDashboardPage() {
 
   const selectedLot = parkingAreas.find((location) => location.id === selectedLocationId);
 
-  const campus = useMemo(
-    () =>
-      parkingAreas.reduce(
-        (totals, area) => ({
-          occupied: totals.occupied + area.occupied,
-          capacity: totals.capacity + area.capacity,
-        }),
-        { occupied: 0, capacity: 0 }
-      ),
-    [parkingAreas]
-  );
+  const campus = useMemo(() => totalOccupancy(parkingAreas), [parkingAreas]);
 
   async function handleLogout() {
     await signOut(auth);
@@ -80,7 +70,7 @@ export default function GuardDashboardPage() {
 
   const campusPercent = getPercentFull(campus.occupied, campus.capacity);
   const campusStatus = getStatus(campusPercent);
-  const lotAvailable = Math.max(0, selectedLot.capacity - selectedLot.occupied);
+  const lotAvailable = freeSpaces(selectedLot);
 
   return (
     <div className="bg-sand-50 min-h-screen w-full pb-10">
@@ -163,7 +153,7 @@ export default function GuardDashboardPage() {
                 <StatTile label="Open spaces" value={lotAvailable} hint="This lot" />
                 <StatTile
                   label="Campus open"
-                  value={Math.max(0, campus.capacity - campus.occupied)}
+                  value={freeSpaces(campus)}
                   hint={`of ${campus.capacity}`}
                 />
               </div>

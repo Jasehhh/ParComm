@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CarFront, ChevronLeft, LogIn } from "lucide-react";
 import type { ParkingArea } from "@/lib/types/schema";
-import { getPercentFull, getStatus } from "@/lib/parkingStatus";
+import { freeSpaces, getPercentFull, getStatus, totalOccupancy } from "@/lib/parkingStatus";
 import { subscribeToParkingAreas } from "@/lib/services/db";
 import { LotCard, LotCardSkeleton } from "@/components/LotCard";
 import { LotPicker } from "@/components/LotPicker";
@@ -36,19 +36,9 @@ export default function UserDashboardPage() {
 
   const selectedLot = parkingAreas.find((location) => location.id === selectedLocationId);
 
-  const campus = useMemo(
-    () =>
-      parkingAreas.reduce(
-        (totals, area) => ({
-          occupied: totals.occupied + area.occupied,
-          capacity: totals.capacity + area.capacity,
-        }),
-        { occupied: 0, capacity: 0 }
-      ),
-    [parkingAreas]
-  );
+  const campus = useMemo(() => totalOccupancy(parkingAreas), [parkingAreas]);
 
-  const availableSpaces = selectedLot ? Math.max(0, selectedLot.capacity - selectedLot.occupied) : 0;
+  const availableSpaces = selectedLot ? freeSpaces(selectedLot) : 0;
   const lotStatus = selectedLot
     ? getStatus(getPercentFull(selectedLot.occupied, selectedLot.capacity))
     : null;
@@ -86,7 +76,7 @@ export default function UserDashboardPage() {
           <p className="text-ink-500 mt-1 text-sm">
             {loading
               ? "Connecting to the campus feed…"
-              : `${Math.max(0, campus.capacity - campus.occupied)} of ${campus.capacity} spaces open right now.`}
+              : `${freeSpaces(campus)} of ${campus.capacity} spaces open right now.`}
           </p>
         </div>
 

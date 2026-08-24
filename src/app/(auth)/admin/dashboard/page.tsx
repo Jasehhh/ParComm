@@ -5,7 +5,8 @@ import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { Inbox, LogOut, Search } from "lucide-react";
 import { auth } from "@/lib/firebase";
-import { getPercentFull, getStatus } from "@/lib/parkingStatus";
+import { freeSpaces, getPercentFull, getStatus, totalOccupancy } from "@/lib/parkingStatus";
+import { combinePredicates, sortBy, unique } from "@/lib/functional";
 import { subscribeToParkingAreas, subscribeToActivityLogs } from "@/lib/services/db";
 import type { ActivityLogRecord, ParkingArea } from "@/lib/types/schema";
 import { LotCard } from "@/components/LotCard";
@@ -17,6 +18,30 @@ import { Wordmark } from "@/components/Wordmark";
 type StatusFilter = "All" | ActivityLogRecord["status"];
 
 const STATUS_FILTERS: StatusFilter[] = ["All", "Parked", "Exited", "Not Parked"];
+
+// --- Pure, curried predicates: each closes over one filter value and answers
+// one question about a row. combinePredicates() folds them into a single test.
+const hasStatus =
+  (filter: StatusFilter) =>
+  (row: ActivityLogRecord): boolean =>
+    filter === "All" || row.status === filter;
+
+const hasLocation =
+  (filter: string) =>
+  (row: ActivityLogRecord): boolean =>
+    filter === "All" || row.location === filter;
+
+const hasDate =
+  (day: string) =>
+  (row: ActivityLogRecord): boolean =>
+    !day || row.date === day;
+
+const matchesTerm =
+  (term: string) =>
+  (row: ActivityLogRecord): boolean =>
+    !term ||
+    row.plate_number.toLowerCase().includes(term) ||
+    row.qrId.toLowerCase().includes(term);
 
 const STATUS_STYLE: Record<ActivityLogRecord["status"], string> = {
   Parked: "bg-[#e7f4ec] text-[#1f7a3d]",
@@ -76,38 +101,25 @@ export default function AdminDashboardPage() {
   }
 
   // Dynamically calculate the campus totals based on real-time data
-  const campusTotal = useMemo(
-    () =>
-      parkingAreas.reduce(
-        (acc, area) => ({
-          occupied: acc.occupied + area.occupied,
-          capacity: acc.capacity + area.capacity,
-        }),
-        { occupied: 0, capacity: 0 }
-      ),
-    [parkingAreas]
-  );
+  const campusTotal = useMemo(() => totalOccupancy(parkingAreas), [parkingAreas]);
 
   const lotNameById = useMemo(
     () => new Map(parkingAreas.map((area) => [area.id, area.name])),
     [parkingAreas]
   );
 
-  const visibleActivities = useMemo(() => {
-    const term = search.trim().toLowerCase();
-
-    return activities.filter((row) => {
-      const matchesStatus = statusFilter === "All" || row.status === statusFilter;
-      const matchesLocation = locationFilter === "All" || row.location === locationFilter;
-      const matchesDate = !dateFilter || row.date === dateFilter;
-      const matchesTerm =
-        !term ||
-        row.plate_number.toLowerCase().includes(term) ||
-        row.qrId.toLowerCase().includes(term);
-
-      return matchesStatus && matchesLocation && matchesDate && matchesTerm;
-    });
-  }, [activities, search, statusFilter, locationFilter, dateFilter]);
+  const visibleActivities = useMemo(
+    () =>
+      activities.filter(
+        combinePredicates([
+          hasStatus(statusFilter),
+          hasLocation(locationFilter),
+          hasDate(dateFilter),
+          matchesTerm(search.trim().toLowerCase()),
+        ])
+      ),
+    [activities, search, statusFilter, locationFilter, dateFilter]
+  );
 
   const filtersActive =
     statusFilter !== "All" || locationFilter !== "All" || Boolean(dateFilter) || Boolean(search);
@@ -117,11 +129,14 @@ export default function AdminDashboardPage() {
    * as more buildings are added to Firestore without a code change.
    */
   const locationOptions = useMemo(() => {
-    const ids = new Set(activities.map((row) => row.location).filter((id) => id && id !== "-"));
-    parkingAreas.forEach((area) => ids.add(area.id));
+    const labelOf = (id: string) => lotNameById.get(id) ?? id;
 
-    return [...ids].sort((a, b) =>
-      (lotNameById.get(a) ?? a).localeCompare(lotNameById.get(b) ?? b)
+    // Pure chain: gather -> drop blanks -> de-duplicate -> order. No mutation.
+    return sortBy(labelOf)(
+      unique([
+        ...activities.map((row) => row.location),
+        ...parkingAreas.map((area) => area.id),
+      ]).filter((id) => id && id !== "-")
     );
   }, [activities, parkingAreas, lotNameById]);
 
@@ -131,7 +146,7 @@ export default function AdminDashboardPage() {
 
   const percentFull = getPercentFull(campusTotal.occupied, campusTotal.capacity);
   const campusStatus = getStatus(percentFull);
-  const availableSpaces = Math.max(0, campusTotal.capacity - campusTotal.occupied);
+  const availableSpaces = freeSpaces(campusTotal);
 
   return (
     <div className="bg-sand-50 min-h-screen w-full">
