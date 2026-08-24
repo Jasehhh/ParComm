@@ -2,7 +2,7 @@ export interface ActivityLogRecord {
   qrId: string;
   plate_number: string;
   time_stamp: string;
-  status: 'Active' | 'Parked' | 'Exited';
+  status: 'Not Parked' | 'Parked' | 'Exited';
   location: string;
 }
 

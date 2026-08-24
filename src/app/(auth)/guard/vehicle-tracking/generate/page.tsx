@@ -67,7 +67,7 @@ export default function GenerateQRCodePage() {
       <div className="-mx-4 -mt-4 flex items-center gap-2 px-4 py-4 font-bold text-black">
         <button
           type="button"
-          onClick={() => router.back()}
+          onClick={() => router.push("/guard/vehicle-tracking")}
           className="flex cursor-pointer items-center"
           aria-label="Go back"
         >
