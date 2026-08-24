@@ -1,77 +1,42 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import { Inbox, LogOut, Search } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import { getPercentFull, getStatus } from "@/lib/parkingStatus";
 import { subscribeToParkingAreas, subscribeToActivityLogs } from "@/lib/services/db";
 import type { ActivityLogRecord, ParkingArea } from "@/lib/types/schema";
+import { LotCard } from "@/components/LotCard";
+import { OccupancyGauge } from "@/components/OccupancyGauge";
+import { StatTile } from "@/components/StatTile";
+import { LoadingState } from "@/components/LoadingState";
+import { Wordmark } from "@/components/Wordmark";
 
-function Gauge({ occupied, capacity }: { occupied: number; capacity: number }) {
-  const percentFull = getPercentFull(occupied, capacity);
-  const ringColor = getStatus(percentFull).color;
-  const radius = 54
-  const circumference = 2 * Math.PI * radius;
-  const filledLength = (percentFull / 100) * circumference;
-  const strokeDashoffset = circumference - filledLength;
+type StatusFilter = "All" | ActivityLogRecord["status"];
 
-  return (
-    <div className="relative mx-auto aspect-square w-[clamp(110px,20vw,150px)]">
-      <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90">
-        <circle cx="60" cy="60" r={radius} fill="none" stroke="#E5DFC8" strokeWidth="10" />
-        <circle
-          cx="60"
-          cy="60"
-          r={radius}
-          fill="none"
-          stroke={ringColor}
-          strokeWidth="10"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
-          className="transition-[stroke-dashoffset] duration-600 ease-out"
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-[clamp(20px,3vw,28px)] font-bold leading-none text-black">{occupied}</span>
-        <span className="mt-1 text-[clamp(8px,1.1vw,10px)] text-black">/ {capacity}</span>
-      </div>
-    </div>
-  );
-}
+const STATUS_FILTERS: StatusFilter[] = ["All", "Parked", "Exited", "Not Parked"];
 
-function CapacityRow({ name, occupied, capacity }: ParkingArea) {
-  const percentFull = getPercentFull(occupied, capacity);
-  const status = getStatus(percentFull);
-
-  return (
-    <div className="rounded-[10px] bg-white p-[clamp(8px,1vw,12px)]">
-      <div className="mb-1 flex items-center justify-between">
-        <span className="text-[clamp(9px,1.1vw,12px)] font-medium text-black">{name}</span>
-        <span className="rounded-full bg-current px-2 py-0.5 text-[clamp(6px,0.7vw,8px)] font-medium text-white" style={{ backgroundColor: status.color }}>
-          {status.label}
-        </span>
-      </div>
-      <div className="h-[5px] overflow-hidden rounded-full bg-stone-200">
-        <div className="h-full rounded-full" style={{ width: `${percentFull}%`, backgroundColor: status.color }} />
-      </div>
-      <div className="mt-1 flex justify-between text-[clamp(6px,0.7vw,8px)] text-black">
-        <span>{occupied} / {capacity}</span>
-        <span>{percentFull}%</span>
-      </div>
-    </div>
-  );
-}
+const STATUS_STYLE: Record<ActivityLogRecord["status"], string> = {
+  Parked: "bg-[#e7f4ec] text-[#1f7a3d]",
+  Exited: "bg-sand-200 text-ink-700",
+  "Not Parked": "bg-brand-100 text-brand-700",
+};
 
 export default function AdminDashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
-  
+
   // Real-time Database State
   const [activities, setActivities] = useState<ActivityLogRecord[]>([]);
   const [parkingAreas, setParkingAreas] = useState<ParkingArea[]>([]);
-  
+
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
+  const [locationFilter, setLocationFilter] = useState("All");
+  const [dateFilter, setDateFilter] = useState("");
+
   const router = useRouter();
 
   useEffect(() => {
@@ -111,110 +76,312 @@ export default function AdminDashboardPage() {
   }
 
   // Dynamically calculate the campus totals based on real-time data
-  const campusTotal = parkingAreas.reduce(
-    (acc, area) => {
-      acc.occupied += area.occupied;
-      acc.capacity += area.capacity;
-      return acc;
-    },
-    { occupied: 0, capacity: 0 }
+  const campusTotal = useMemo(
+    () =>
+      parkingAreas.reduce(
+        (acc, area) => ({
+          occupied: acc.occupied + area.occupied,
+          capacity: acc.capacity + area.capacity,
+        }),
+        { occupied: 0, capacity: 0 }
+      ),
+    [parkingAreas]
   );
 
-  if (checkingAuth || !user) {
-    return (
-      <div className="flex min-h-screen w-full items-center justify-center bg-[#F6F2D9]">
-        <div className="text-[#D2691E] text-xl font-bold animate-pulse">Verifying Admin...</div>
-      </div>
+  const lotNameById = useMemo(
+    () => new Map(parkingAreas.map((area) => [area.id, area.name])),
+    [parkingAreas]
+  );
+
+  const visibleActivities = useMemo(() => {
+    const term = search.trim().toLowerCase();
+
+    return activities.filter((row) => {
+      const matchesStatus = statusFilter === "All" || row.status === statusFilter;
+      const matchesLocation = locationFilter === "All" || row.location === locationFilter;
+      const matchesDate = !dateFilter || row.date === dateFilter;
+      const matchesTerm =
+        !term ||
+        row.plate_number.toLowerCase().includes(term) ||
+        row.qrId.toLowerCase().includes(term);
+
+      return matchesStatus && matchesLocation && matchesDate && matchesTerm;
+    });
+  }, [activities, search, statusFilter, locationFilter, dateFilter]);
+
+  const filtersActive =
+    statusFilter !== "All" || locationFilter !== "All" || Boolean(dateFilter) || Boolean(search);
+
+  /**
+   * Locations that actually appear in the log, so the dropdown keeps working
+   * as more buildings are added to Firestore without a code change.
+   */
+  const locationOptions = useMemo(() => {
+    const ids = new Set(activities.map((row) => row.location).filter((id) => id && id !== "-"));
+    parkingAreas.forEach((area) => ids.add(area.id));
+
+    return [...ids].sort((a, b) =>
+      (lotNameById.get(a) ?? a).localeCompare(lotNameById.get(b) ?? b)
     );
+  }, [activities, parkingAreas, lotNameById]);
+
+  if (checkingAuth || !user) {
+    return <LoadingState message="Verifying admin access" />;
   }
 
+  const percentFull = getPercentFull(campusTotal.occupied, campusTotal.capacity);
+  const campusStatus = getStatus(percentFull);
+  const availableSpaces = Math.max(0, campusTotal.capacity - campusTotal.occupied);
+
   return (
-    <div className="min-h-screen w-full bg-[#F6F2D9] p-4 font-sans sm:p-6">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-[clamp(15px,1.8vw,20px)] font-medium text-black">
-          Welcome to <span className="font-bold text-[#F5A623]">Par</span>
-          <span className="font-bold text-[#D2691E]">Comm</span>
-        </h1>
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="text-[clamp(11px,1.2vw,13px)] font-semibold text-red-600"
-        >
-          Logout
-        </button>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-[1fr_320px]">
-        <div className="overflow-hidden rounded-[14px] bg-[#F5A623]">
-          <p className="p-3 text-[clamp(13px,1.5vw,16px)] font-bold text-black">Activity Log</p>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-[clamp(10px,1.1vw,12px)]">
-              <thead>
-                <tr className="text-left text-black/70">
-                  <th className="px-3 pb-2 font-medium">QR ID</th>
-                  <th className="px-3 pb-2 font-medium">Plate Number</th>
-                  <th className="px-3 pb-2 font-medium">Time Stamp</th>
-                  <th className="px-3 pb-2 font-medium">Status</th>
-                  <th className="px-3 pb-2 font-medium">Location</th>
-                </tr>
-              </thead>
-              <tbody>
-                {activities.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-3 py-8 text-center text-black/70">
-                      No activity logs found.
-                    </td>
-                  </tr>
-                ) : (
-                  activities.map((row, i) => (
-                    // FIX: Unique key combining ID and index prevents React duplication crashes
-                    <tr key={`${row.qrId}-${i}`} className={i % 2 === 0 ? "bg-[#FBBF4D]" : "bg-transparent"}>
-                      <td className="px-3 py-1.5 text-black font-mono">{row.qrId}</td>
-                      <td className="px-3 py-1.5 text-black uppercase">{row.plate_number}</td>
-                      <td className="px-3 py-1.5 text-black font-mono">{row.time_stamp}</td>
-                      <td className="px-3 py-1.5 text-black">{row.status}</td>
-                      <td className="px-3 py-1.5 text-black capitalize">{row.location}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+    <div className="bg-sand-50 min-h-screen w-full">
+      <header className="border-sand-200 bg-sand-50/85 sticky top-0 z-20 border-b backdrop-blur">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <Wordmark withMark size="md" />
+            <span className="bg-brand-50 text-brand-700 hidden rounded-full px-2 py-0.5 text-[11px] font-bold sm:inline">
+              Admin
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="text-ink-500 hover:bg-sand-100 hover:text-ink-900 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-semibold transition-colors"
+            >
+              <LogOut size={14} />
+              <span className="hidden sm:inline">Log out</span>
+            </button>
           </div>
         </div>
+      </header>
 
-        <div className="flex flex-col gap-3">
-          <div className="rounded-[14px] bg-stone-200 p-[clamp(12px,1.5vw,16px)] text-center">
-            <p className="text-[clamp(11px,1.2vw,14px)] font-semibold leading-none text-black">
-              Campus Parking Status
-            </p>
-            <p className="mt-1 mb-1 text-[clamp(7px,0.9vw,9px)] text-black">
-              Live Availability Monitor
-            </p>
+      <main className="mx-auto w-full max-w-6xl px-4 pb-12 pt-5">
+        <div className="mb-5">
+          <h1 className="text-ink-900 text-2xl font-extrabold tracking-tight">Campus overview</h1>
+          <p className="text-ink-500 mt-1 truncate text-sm">{user.email}</p>
+        </div>
 
-            <Gauge occupied={campusTotal.occupied} capacity={campusTotal.capacity} />
+        {/* Headline numbers first — this is a monitoring screen */}
+        <div className="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+          <StatTile
+            label="Occupied"
+            value={campusTotal.occupied}
+            hint={`${percentFull}% of campus`}
+          />
+          <StatTile
+            label="Available"
+            value={availableSpaces}
+            accent={campusStatus.color}
+            hint={campusStatus.label}
+          />
+          <StatTile label="Capacity" value={campusTotal.capacity} hint="All lots" />
+          <StatTile label="Log entries" value={activities.length} hint="Today's feed" />
+        </div>
 
-            <div className="mt-2 flex justify-between px-1">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+          <section className="pc-card overflow-hidden">
+            <div className="border-sand-200 flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3.5">
               <div>
-                <p className="text-[clamp(7px,0.8vw,9px)] text-black">Available Spaces</p>
-                <p className="text-[clamp(10px,1.1vw,13px)] font-semibold text-black">
-                  {campusTotal.capacity > 0 ? campusTotal.capacity - campusTotal.occupied : 0}
+                <h2 className="text-ink-900 text-sm font-bold">Activity log</h2>
+                <p className="text-ink-400 text-xs">
+                  {visibleActivities.length} of {activities.length} entries
                 </p>
               </div>
-              <div>
-                <p className="text-[clamp(7px,0.8vw,9px)] text-black">Total Capacity</p>
-                <p className="text-[clamp(10px,1.1vw,13px)] font-semibold text-black">
-                  {campusTotal.capacity}
-                </p>
+
+              <div className="relative w-full sm:w-56">
+                <Search
+                  size={15}
+                  className="text-ink-300 pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
+                />
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search plate or QR ID"
+                  aria-label="Search activity log"
+                  className="pc-field py-2 pl-9 text-sm"
+                />
               </div>
             </div>
-          </div>
 
-          {parkingAreas.map((b) => (
-            <CapacityRow key={b.id} {...b} />
-          ))}
+            <div className="border-sand-200 flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 py-2.5">
+              <div className="flex gap-1.5 overflow-x-auto">
+                {STATUS_FILTERS.map((filter) => (
+                  <button
+                    key={filter}
+                    type="button"
+                    onClick={() => setStatusFilter(filter)}
+                    aria-pressed={statusFilter === filter}
+                    className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                      statusFilter === filter
+                        ? "bg-ink-900 text-white"
+                        : "bg-sand-100 text-ink-500 hover:bg-sand-200"
+                    }`}
+                  >
+                    {filter}
+                  </button>
+                ))}
+              </div>
+
+              <span className="bg-sand-200 hidden h-5 w-px sm:block" aria-hidden="true" />
+
+              <label className="sr-only" htmlFor="location-filter">
+                Filter by location
+              </label>
+              <select
+                id="location-filter"
+                value={locationFilter}
+                onChange={(e) => setLocationFilter(e.target.value)}
+                className="border-sand-300 text-ink-700 focus:border-brand-400 rounded-full border bg-white px-3 py-1.5 text-xs font-semibold outline-none"
+              >
+                <option value="All">All locations</option>
+                {locationOptions.map((id) => (
+                  <option key={id} value={id}>
+                    {lotNameById.get(id) ?? id}
+                  </option>
+                ))}
+              </select>
+
+              <label className="sr-only" htmlFor="date-filter">
+                Filter by date
+              </label>
+              <input
+                id="date-filter"
+                type="date"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="border-sand-300 text-ink-700 focus:border-brand-400 rounded-full border bg-white px-3 py-1.5 text-xs font-semibold outline-none"
+              />
+
+              {filtersActive && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStatusFilter("All");
+                    setLocationFilter("All");
+                    setDateFilter("");
+                    setSearch("");
+                  }}
+                  className="text-ink-400 hover:text-ink-900 ml-auto text-xs font-semibold transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            {visibleActivities.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 px-4 py-16 text-center">
+                <Inbox size={26} className="text-ink-300" />
+                <p className="text-ink-700 text-sm font-semibold">
+                  {activities.length === 0 ? "No activity yet" : "No matching entries"}
+                </p>
+                <p className="text-ink-400 max-w-xs text-xs">
+                  {activities.length === 0
+                    ? "Entries appear here as guards scan vehicles in and out."
+                    : "Try a different plate number, QR ID, or status filter."}
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Desktop: dense table. Mobile: one card per entry. */}
+                <div className="hidden md:block">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-sand-200 text-ink-500 border-b text-left text-xs">
+                        <th className="px-4 py-2.5 font-semibold">QR ID</th>
+                        <th className="px-4 py-2.5 font-semibold">Plate</th>
+                        <th className="px-4 py-2.5 font-semibold">Time</th>
+                        <th className="px-4 py-2.5 font-semibold">Status</th>
+                        <th className="px-4 py-2.5 font-semibold">Location</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visibleActivities.map((row, i) => (
+                        // Unique key combining ID and index prevents React duplication crashes
+                        <tr
+                          key={`${row.qrId}-${i}`}
+                          className="border-sand-100 hover:bg-sand-50 border-b transition-colors last:border-b-0"
+                        >
+                          <td className="text-ink-500 px-4 py-2.5 font-mono text-xs">{row.qrId}</td>
+                          <td className="text-ink-900 px-4 py-2.5 font-mono font-semibold uppercase">
+                            {row.plate_number}
+                          </td>
+                          <td className="text-ink-700 px-4 py-2.5 font-mono text-xs">
+                            {row.time_stamp}
+                            {row.date && (
+                              <span className="text-ink-400 ml-2">{row.date}</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <LogStatus status={row.status} />
+                          </td>
+                          <td className="text-ink-700 px-4 py-2.5 capitalize">
+                            {lotNameById.get(row.location) ?? row.location}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <ul className="divide-sand-100 divide-y md:hidden">
+                  {visibleActivities.map((row, i) => (
+                    <li key={`${row.qrId}-${i}`} className="flex items-center gap-3 px-4 py-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-ink-900 font-mono text-sm font-bold uppercase">
+                          {row.plate_number}
+                        </p>
+                        <p className="text-ink-400 mt-0.5 truncate text-xs">
+                          {row.qrId} · {lotNameById.get(row.location) ?? row.location}
+                        </p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <LogStatus status={row.status} />
+                        <p className="text-ink-400 mt-1 font-mono text-[11px]">{row.time_stamp}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </section>
+
+          <aside className="flex flex-col gap-3 lg:sticky lg:top-20">
+            <div className="pc-card p-5">
+              <p className="pc-eyebrow">Campus parking</p>
+              <p className="text-ink-900 text-sm font-semibold">All lots combined</p>
+
+              <div className="py-4">
+                <OccupancyGauge
+                  occupied={campusTotal.occupied}
+                  capacity={campusTotal.capacity}
+                  size={180}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <StatTile label="Available" value={availableSpaces} accent={campusStatus.color} />
+                <StatTile label="Capacity" value={campusTotal.capacity} />
+              </div>
+            </div>
+
+            {parkingAreas.map((area) => (
+              <LotCard key={area.id} {...area} />
+            ))}
+          </aside>
         </div>
-      </div>
+      </main>
     </div>
+  );
+}
+
+function LogStatus({ status }: { status: ActivityLogRecord["status"] }) {
+  return (
+    <span
+      className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none ${STATUS_STYLE[status]}`}
+    >
+      {status}
+    </span>
   );
 }

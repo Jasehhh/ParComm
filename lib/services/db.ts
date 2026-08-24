@@ -18,15 +18,19 @@ export const subscribeToActivityLogs = (callback: (logs: ActivityLogRecord[]) =>
       const data = doc.data();
       
       let formattedTime = "00:00:00";
+      let calendarDay = "";
       if (data.time_stamp && typeof data.time_stamp.toDate === 'function') {
         const dateObj = data.time_stamp.toDate();
         formattedTime = dateObj.toLocaleTimeString('en-US', { hour12: false });
+        // en-CA renders as YYYY-MM-DD, which is what <input type="date"> expects
+        calendarDay = dateObj.toLocaleDateString('en-CA');
       }
 
       return {
         qrId: data.qrId || doc.id.substring(0, 6).toUpperCase(),
         plate_number: data.plate_number || 'Unknown',
         time_stamp: formattedTime,
+        date: calendarDay,
         status: data.status === 'Active' ? 'Not Parked' : (data.status || 'Not Parked'),
         location: data.location || '-'
       } as ActivityLogRecord;
@@ -68,13 +72,13 @@ export const subscribeToParkingAreas = (callback: (areas: ParkingArea[]) => void
 //making parking ticket
 export const createParkingTicket = async (qrId: string, plateNumber: string) => {
   const logCollection = collection(db, "tickets");
-  
+
   await addDoc(logCollection, {
     qrId: qrId,
     plate_number: plateNumber,
     status: "Not Parked",
     location: "",
-    time_stamp: serverTimestamp() 
+    time_stamp: serverTimestamp()
   });
 };
 
@@ -145,7 +149,7 @@ export const processTicketScan = async (
       qrId: ticketId,
       plate_number: plateNumber,
       status: action,
-      location: locationId, 
+      location: locationId,
       time_stamp: serverTimestamp()
     });
   } else if (action === "Exited") {
