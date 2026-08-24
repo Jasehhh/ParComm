@@ -278,7 +278,7 @@ export default function AdminDashboardPage() {
                 </p>
                 <p className="text-ink-400 max-w-xs text-xs">
                   {activities.length === 0
-                    ? "Entries appear here as guards scan vehicles in and out."
+                    ? "Entries appear here as guards issue tickets and scan vehicles in and out."
                     : "Try a different plate number, QR ID, or status filter."}
                 </p>
               </div>

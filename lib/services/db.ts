@@ -71,9 +71,20 @@ export const subscribeToParkingAreas = (callback: (areas: ParkingArea[]) => void
 
 //making parking ticket
 export const createParkingTicket = async (qrId: string, plateNumber: string) => {
-  const logCollection = collection(db, "tickets");
+  const ticketCollection = collection(db, "tickets");
 
-  await addDoc(logCollection, {
+  await addDoc(ticketCollection, {
+    qrId: qrId,
+    plate_number: plateNumber,
+    status: "Not Parked",
+    location: "",
+    time_stamp: serverTimestamp()
+  });
+
+  // Mirror the ticket into the admin feed straight away, so a QR that has been
+  // issued but not yet scanned is visible as "Not Parked". This row is then
+  // updated in place on park and on exit — one row per ticket, never appended.
+  await addDoc(collection(db, "activity_log"), {
     qrId: qrId,
     plate_number: plateNumber,
     status: "Not Parked",
@@ -144,14 +155,28 @@ export const processTicketScan = async (
   const logCollection = collection(db, "activity_log");
   
   if (action === "Parked") {
-    // Car is arriving -> Create a new row
-    await addDoc(logCollection, {
-      qrId: ticketId,
-      plate_number: plateNumber,
-      status: action,
-      location: locationId,
-      time_stamp: serverTimestamp()
-    });
+    // Car is arriving -> update this ticket's existing row (created when the QR
+    // was generated). Tickets issued before that behaviour existed have no row,
+    // so fall back to appending one.
+    const qLog = query(logCollection, where("qrId", "==", ticketId));
+    const logSnap = await getDocs(qLog);
+
+    if (!logSnap.empty) {
+      await updateDoc(logSnap.docs[0].ref, {
+        plate_number: plateNumber,
+        status: action,
+        location: locationId,
+        time_stamp: serverTimestamp()
+      });
+    } else {
+      await addDoc(logCollection, {
+        qrId: ticketId,
+        plate_number: plateNumber,
+        status: action,
+        location: locationId,
+        time_stamp: serverTimestamp()
+      });
+    }
   } else if (action === "Exited") {
     // Car is leaving -> Find their active row and update it
     const qLog = query(logCollection, where("qrId", "==", ticketId), where("status", "==", "Parked"));
