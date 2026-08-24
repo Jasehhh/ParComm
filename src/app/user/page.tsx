@@ -145,7 +145,7 @@ export default function UserDashboardPage() {
       </div>
 
       <div className="mb-[clamp(8px,1.3vw,12px)] rounded-[12px] bg-stone-200 p-[clamp(10px,1.5vw,16px)] text-center">
-        <p className="text-[clamp(10px,1.3vw,15px)] font-semibold leading-none text-blac"> {selectedLot.name} Parking Status</p>
+        <p className="text-[clamp(10px,1.3vw,15px)] font-semibold leading-none text-black"> {selectedLot.name} Parking Status</p>
         <p className="mt-[2px] mb-[2px] text-[clamp(7px,0.9vw,10px)] text-black">Live Availability Monitor</p>
 
         <Gauge occupied={selectedLot.occupied} capacity={selectedLot.capacity} />
