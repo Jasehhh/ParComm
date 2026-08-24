@@ -11,7 +11,7 @@ export const subscribeToActivityLogs = (callback: (logs: ActivityLogRecord[]) =>
   const logCollection = collection(db, 'activity_log');
   
   // FIX: Added the sorting query to put newest timestamps at the top
-  const q = query(logCollection, orderBy("time_stamp", "desc"));  
+  const q = query(logCollection, orderBy("time_stamp", "desc"));
   
   const unsubscribe = onSnapshot(q, (snapshot) => {
     const fetchedLogs = snapshot.docs.map(doc => {
