@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { CarFront, ChevronLeft, LogIn } from "lucide-react";
+import { CarFront, ChevronLeft } from "lucide-react";
 import type { ParkingArea } from "@/lib/types/schema";
 import { freeSpaces, getPercentFull, getStatus, totalOccupancy } from "@/lib/parkingStatus";
 import { subscribeToParkingAreas } from "@/lib/services/db";
@@ -57,14 +57,6 @@ export default function UserDashboardPage() {
           </Link>
 
           <Wordmark withMark size="md" />
-
-          <Link
-            href="/login-page"
-            className="text-ink-500 hover:text-ink-800 ml-auto inline-flex shrink-0 items-center gap-1.5 text-xs font-semibold transition-colors"
-          >
-            <LogIn size={14} />
-            <span className="hidden sm:inline">Staff sign in</span>
-          </Link>
         </div>
       </header>
 
