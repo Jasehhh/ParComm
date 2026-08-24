@@ -7,9 +7,9 @@ export type ParkingStatus = {
 
 // Pure function: same input always produces same output, no side effects
 export const getStatus = (percentFull: number): ParkingStatus => {
-  if (percentFull >= 85) return { label: "Full", color: "#E53935" };
-  if (percentFull >= 60) return { label: "Limited", color: "#FF8A00" };
-  return { label: "Available", color: "#2CC83A" };
+  if (percentFull >= 85) return { label: "Full", color: "#D33A2C" };
+  if (percentFull >= 60) return { label: "Limited", color: "#E2820E" };
+  return { label: "Available", color: "#2E9E4F" };
 };
 
 // Pure function, no mutation — clamps and computes without touching inputs
