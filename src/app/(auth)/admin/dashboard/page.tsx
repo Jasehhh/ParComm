@@ -77,7 +77,9 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     // 1. Auth Listener
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
-      if (!firebaseUser) {
+      const email = firebaseUser?.email?.toLowerCase();
+
+      if (!firebaseUser || email !== "admin@cpu.edu.ph") {
         router.push("/login-page");
       } else {
         setUser(firebaseUser);

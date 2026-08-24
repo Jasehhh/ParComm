@@ -27,7 +27,7 @@ export const subscribeToActivityLogs = (callback: (logs: ActivityLogRecord[]) =>
         qrId: data.qrId || doc.id.substring(0, 6).toUpperCase(),
         plate_number: data.plate_number || 'Unknown',
         time_stamp: formattedTime,
-        status: data.status || 'Active',
+        status: data.status === 'Active' ? 'Not Parked' : (data.status || 'Not Parked'),
         location: data.location || '-'
       } as ActivityLogRecord;
     });
@@ -72,7 +72,7 @@ export const createParkingTicket = async (qrId: string, plateNumber: string) => 
   await addDoc(logCollection, {
     qrId: qrId,
     plate_number: plateNumber,
-    status: "Active",
+    status: "Not Parked",
     location: "",
     time_stamp: serverTimestamp() 
   });
