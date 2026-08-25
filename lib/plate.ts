@@ -1,16 +1,15 @@
-// app/guard/vehicle-tracking/generate/plate.ts
 import { pipe, combineValidators, converge } from "@/lib/functional";
 import { Result } from "@/lib/types/types";
 import { PlateError } from "@/lib/types/types";
 
-// --- Pure normalization, composed via shared pipe() ---
+// Pure normalization, composed via shared pipe()
 const trimPlate = (raw: string): string => raw.trim();
 const collapseSpaces = (plate: string): string => plate.replace(/\s+/g, " ");
 const upperCasePlate = (plate: string): string => plate.toUpperCase();
 
 const normalizePlate = pipe(trimPlate, collapseSpaces, upperCasePlate);
 
-// --- Pure validators ---
+// Pure validators
 const checkNotEmpty = (plate: string): Result<string, PlateError> =>
   plate.length > 0
     ? { ok: true, value: plate }
@@ -35,7 +34,7 @@ const validatePlate = combineValidators([checkNotEmpty, checkMinLength, checkVal
 export const parsePlate = (raw: string): Result<string, PlateError> =>
   validatePlate(normalizePlate(raw));
 
-// --- Pure input formatting, composed the same way ---
+// Pure input formatting, composed the same way
 // Each step is a small total function; converge() splits the normalized text
 // into its letter and digit parts and joins them back into ABC-1234 shape.
 const lettersOf = (plate: string): string =>

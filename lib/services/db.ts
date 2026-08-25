@@ -1,5 +1,5 @@
 
-import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query, where, doc, increment, updateDoc, getDoc, getDocs, orderBy } from "firebase/firestore";
+import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query, where, doc, increment, updateDoc, getDoc, getDocs, orderBy, Timestamp } from "firebase/firestore";
 import app from "@/lib/firebase";
 import { ActivityLogRecord, ParkingArea } from "@/lib/types/schema";
 
@@ -10,7 +10,6 @@ const db = getFirestore(app);
 export const subscribeToActivityLogs = (callback: (logs: ActivityLogRecord[]) => void) => {
   const logCollection = collection(db, 'activity_log');
   
-  // FIX: Added the sorting query to put newest timestamps at the top
   const q = query(logCollection, orderBy("time_stamp", "desc"));
   
   const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -22,10 +21,9 @@ export const subscribeToActivityLogs = (callback: (logs: ActivityLogRecord[]) =>
       if (data.time_stamp && typeof data.time_stamp.toDate === 'function') {
         const dateObj = data.time_stamp.toDate();
         formattedTime = dateObj.toLocaleTimeString('en-US', { hour12: false });
-        // en-CA renders as YYYY-MM-DD, which is what <input type="date"> expects
+        // en-CA renders as YYYY-MM-DD
         calendarDay = dateObj.toLocaleDateString('en-CA');
       }
-
       return {
         qrId: data.qrId || doc.id.substring(0, 6).toUpperCase(),
         plate_number: data.plate_number || 'Unknown',
@@ -51,7 +49,7 @@ export const subscribeToParkingAreas = (callback: (areas: ParkingArea[]) => void
     const liveAreas = snapshot.docs.map(doc => {
       const data = doc.data();
       return {
-        id: doc.id, // We use the Firestore document ID as our primary key
+        id: doc.id, 
         name: data.name,
         occupied: data.occupied,
         capacity: data.capacity,
@@ -72,13 +70,15 @@ export const subscribeToParkingAreas = (callback: (areas: ParkingArea[]) => void
 //making parking ticket
 export const createParkingTicket = async (qrId: string, plateNumber: string) => {
   const ticketCollection = collection(db, "tickets");
+  const expiresAt = Timestamp.fromMillis(Date.now() + 12 * 60 * 60 * 1000);
 
   await addDoc(ticketCollection, {
     qrId: qrId,
     plate_number: plateNumber,
     status: "Not Parked",
     location: "",
-    time_stamp: serverTimestamp()
+    time_stamp: serverTimestamp(),
+    expiresAt
   });
 
   // Mirror the ticket into the admin feed straight away, so a QR that has been
@@ -110,11 +110,15 @@ export const processTicketScan = async (
   const ticketData = ticketDoc.data();
   const currentStatus = ticketData.status;
   const plateNumber = ticketData.plate_number;
+
+  if (ticketData.expiresAt?.toMillis && ticketData.expiresAt.toMillis() <= Date.now()) {
+    throw new Error("This QR ticket has expired. Generate a new ticket.");
+  }
   
   // Fallback in case location isn't set on the ticket yet
   const ticketLocation = ticketData.location || locationId;
 
-  // --- 1. STRICT SAFETY CHECKS (Must happen BEFORE any database updates) ---
+  // STRICT SAFETY CHECKS (Must happen BEFORE any database updates)
   
   // Prevent double-parking with smart location awareness
   if (action === "Parked" && currentStatus === "Parked") {
@@ -142,7 +146,7 @@ export const processTicketScan = async (
     }
   }
 
-  // --- 2. EXECUTE THE UPDATES ---
+  // EXECUTE THE UPDATES 
   
   // A. Update the ticket itself (Save the location if parking IN)
   if (action === "Parked") {
@@ -191,7 +195,7 @@ export const processTicketScan = async (
     }
   }
 
-  // C. Update the parking_areas capacity gauge (+1 if parked, -1 if exited)
+  // Update the parking_areas capacity gauge (+1 if parked, -1 if exited)
   const capacityChange = action === "Parked" ? 1 : -1;
   await updateDoc(areaRef, {
     occupied: increment(capacityChange)

@@ -1,10 +1,7 @@
 // lib/authResult.ts
 import { signInWithEmailAndPassword, type UserCredential } from "firebase/auth";
 import { auth } from "./firebase";
-
-export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
-
-export type AuthError = { type: "INVALID_CREDENTIALS"; message: string };
+import type { AuthError, Result } from "./types/types";
 
 export const attemptLogin = async (
   email: string,

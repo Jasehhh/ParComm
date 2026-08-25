@@ -1,9 +1,4 @@
-type StatTileProps = {
-  label: string;
-  value: React.ReactNode;
-  hint?: string;
-  accent?: string;
-};
+import type { StatTileProps } from "@/lib/types/types";
 
 export function StatTile({ label, value, hint, accent }: StatTileProps) {
   return (
