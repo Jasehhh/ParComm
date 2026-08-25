@@ -3,12 +3,8 @@
 import { getPercentFull, getStatus } from "@/lib/parkingStatus";
 import type { ParkingArea } from "@/lib/types/schema";
 import { StatusPill } from "@/components/StatusPill";
+import type { LotCardProps } from "@/lib/types/types";
 
-type LotCardProps = ParkingArea & {
-  /** Highlights the lot currently shown in the gauge. */
-  active?: boolean;
-  onSelect?: (id: string) => void;
-};
 
 export function LotCard({ id, name, occupied, capacity, active = false, onSelect }: LotCardProps) {
   const percentFull = getPercentFull(occupied, capacity);

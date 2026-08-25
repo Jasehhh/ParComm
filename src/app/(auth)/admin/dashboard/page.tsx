@@ -19,7 +19,7 @@ type StatusFilter = "All" | ActivityLogRecord["status"];
 
 const STATUS_FILTERS: StatusFilter[] = ["All", "Parked", "Exited", "Not Parked"];
 
-// --- Pure, curried predicates: each closes over one filter value and answers
+// Pure, curried predicates: each closes over one filter value and answers
 // one question about a row. combinePredicates() folds them into a single test.
 const hasStatus =
   (filter: StatusFilter) =>
@@ -174,7 +174,9 @@ export default function AdminDashboardPage() {
       <main className="mx-auto w-full max-w-6xl px-4 pb-12 pt-5">
         <div className="mb-5">
           <h1 className="text-ink-900 text-2xl font-extrabold tracking-tight">Campus overview</h1>
-          <p className="text-ink-500 mt-1 truncate text-sm">{user.email}</p>
+          <p className="text-ink-500 text-sm">
+            Monitor and manage parking activity across the campus.
+          </p>
         </div>
 
         {/* Headline numbers first — this is a monitoring screen */}

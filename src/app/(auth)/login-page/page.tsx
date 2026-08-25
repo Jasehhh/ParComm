@@ -87,7 +87,7 @@ export default function DashboardLoginPage() {
               onClick={() => router.push("/user")}
               className="pc-btn pc-btn-primary mt-6 w-full"
             >
-              Continue as student
+              Continue as user
               <ArrowRight size={18} />
             </button>
 

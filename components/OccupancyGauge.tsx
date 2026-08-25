@@ -1,18 +1,10 @@
 "use client";
 
 import { getPercentFull, getStatus } from "@/lib/parkingStatus";
-
-type OccupancyGaugeProps = {
-  occupied: number;
-  capacity: number;
-  /** Diameter in pixels of the rendered gauge. */
-  size?: number;
-  label?: string;
-};
+import type { OccupancyGaugeProps } from "@/lib/types/types";
 
 const RADIUS = 54;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-/** Gauge sweeps 270°, leaving an open gap at the bottom. */
 const ARC = CIRCUMFERENCE * 0.75;
 
 export function OccupancyGauge({ occupied, capacity, size = 176, label }: OccupancyGaugeProps) {

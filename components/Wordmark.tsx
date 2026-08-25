@@ -1,11 +1,5 @@
 import Image from "next/image";
-
-type WordmarkProps = {
-  /** Show the round logo mark beside the wordmark. */
-  withMark?: boolean;
-  className?: string;
-  size?: "sm" | "md" | "lg";
-};
+import type { WordmarkProps } from "@/lib/types/types";
 
 const TEXT_SIZE = {
   sm: "text-base",
