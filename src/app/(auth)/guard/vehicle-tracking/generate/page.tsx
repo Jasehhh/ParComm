@@ -1,25 +1,40 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft } from "lucide-react";
+import { AlertCircle, Check, Loader2, QrCode } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { parsePlate } from "@/lib/plate";
+import { parsePlate, formatPlateInput, isCompletePlate } from "@/lib/plate";
 import { PlateError } from "@/lib/types/types";
 import { createParkingTicket } from "@/lib/services/db";
+import { AppBar } from "@/components/AppBar";
+
+/** Turn a Firestore failure into something a guard can act on. */
+function describeWriteFailure(err: unknown): string {
+  const code = (err as { code?: string })?.code ?? "";
+
+  if (code === "permission-denied") {
+    return "Firestore refused the write (permission-denied). Sign in as guard staff and try again.";
+  }
+
+  if (code === "unavailable" || code === "failed-precondition") {
+    return "Cannot reach Firestore. Check the network connection and try again.";
+  }
+
+  const message = err instanceof Error ? err.message : String(err);
+  return `Could not save the ticket${code ? ` (${code})` : ""}. ${message}`;
+}
 
 export default function GenerateQRCodePage() {
   const router = useRouter();
   const [plateNumber, setPlateNumber] = useState("");
   const [error, setError] = useState<PlateError | null>(null);
+  const [writeError, setWriteError] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handlePlateChange = (value: string) => {
-    const normalized = value.toUpperCase();
-    const letters = (normalized.match(/[A-Z]/g) ?? []).slice(0, 3).join("");
-    const numbers = (normalized.match(/[0-9]/g) ?? []).slice(0, 4).join("");
-    const formatted = letters.length === 3 ? `${letters}-${numbers}` : letters;
-
-    setPlateNumber(formatted);
+    setPlateNumber(formatPlateInput(value));
+    if (error) setError(null);
+    if (writeError) setWriteError("");
   };
 
   const handlePlateKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -34,6 +49,7 @@ export default function GenerateQRCodePage() {
 
     if (result.ok) {
       setError(null);
+      setWriteError("");
       setIsGenerating(true);
 
       try {
@@ -44,65 +60,126 @@ export default function GenerateQRCodePage() {
         await createParkingTicket(newTicketId, result.value);
 
         // 3. Route to result page with BOTH plate and ticket ID in the URL
-        const params = new URLSearchParams({ 
+        const params = new URLSearchParams({
           plate: result.value,
-          ticketId: newTicketId 
+          ticketId: newTicketId,
         });
-        
+
         router.push(`/guard/vehicle-tracking/generate/result?${params.toString()}`);
       } catch (err) {
         console.error("Failed to generate ticket:", err);
-        setError({ message: "Failed to connect to database." } as PlateError);
+        setWriteError(describeWriteFailure(err));
       } finally {
         setIsGenerating(false);
       }
     } else {
       setError(result.error);
-    } 
+    }
   };
 
-  return (
-    // Updated background color to #F5A623 to match your yellow mockup!
-    <div className="min-h-screen w-full bg-[#F5A623] p-4 font-sans flex flex-col gap-[clamp(14px,2.5vw,20px)]">
-      <div className="-mx-4 -mt-4 flex items-center gap-2 px-4 py-4 font-bold text-black">
-        <button
-          type="button"
-          onClick={() => router.push("/guard/vehicle-tracking")}
-          className="flex cursor-pointer items-center"
-          aria-label="Go back"
-        >
-          <ChevronLeft size={22} />
-        </button>
-        <span className="text-[clamp(15px,2vw,19px)]">Generate QR Code</span>
-      </div>
+  const isComplete = isCompletePlate(plateNumber);
 
-      <div className="flex w-full flex-1 items-center justify-center">
-        <div className="w-full max-w-[420px] rounded-[16px] bg-[#FDFBF0] p-[clamp(20px,4vw,28px)] shadow-sm">
-          <label className="mb-2 block text-[clamp(11px,1.3vw,13px)] font-bold text-gray-800">
-            Vehicle Plate Number
+  return (
+    <div className="bg-sand-50 flex min-h-screen w-full flex-col">
+      <AppBar
+        title="Generate QR code"
+        subtitle="New vehicle ticket"
+        backHref="/guard/vehicle-tracking"
+      />
+
+      <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-8">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleGenerate();
+          }}
+          className="pc-card p-6"
+        >
+          <div className="bg-brand-50 text-brand-600 mb-5 flex h-12 w-12 items-center justify-center rounded-2xl">
+            <QrCode size={24} strokeWidth={1.9} />
+          </div>
+
+          <h1 className="text-ink-900 text-xl font-extrabold tracking-tight">Vehicle plate number</h1>
+          <p className="text-ink-500 mt-1 text-sm">
+            Type the plate exactly as it appears. The dash is added for you.
+          </p>
+
+          {/* Plate-styled input: the guard is copying what they see on the bumper */}
+          <label htmlFor="plate" className="sr-only">
+            Vehicle plate number
           </label>
-          <input
-            type="text"
-            value={plateNumber}
-            onChange={(e) => handlePlateChange(e.target.value)}
-            onKeyDown={handlePlateKeyDown}
-            maxLength={8}
-            pattern="[A-Za-z]{3}-[0-9]{4}"
-            disabled={isGenerating}
-            placeholder="E.G. ABC-1234"
-            className="mb-1 w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-[clamp(11px,1.3vw,13px)] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400 disabled:opacity-50"
-          />
-          {error && <p className="mb-3 text-xs text-red-600">{error.message}</p>}
+          <div className="relative mt-5">
+            <input
+              id="plate"
+              type="text"
+              value={plateNumber}
+              onChange={(e) => handlePlateChange(e.target.value)}
+              onKeyDown={handlePlateKeyDown}
+              maxLength={8}
+              autoFocus
+              autoCapitalize="characters"
+              autoComplete="off"
+              spellCheck={false}
+              disabled={isGenerating}
+              placeholder="ABC-1234"
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? "plate-error" : "plate-hint"}
+              className={`border-sand-300 bg-sand-100 text-ink-900 placeholder:text-ink-300 w-full rounded-[0.875rem] border-2 py-4 text-center font-mono text-3xl font-bold tracking-[0.18em] uppercase outline-none transition-colors disabled:opacity-60 ${
+                error
+                  ? "border-red-400 bg-red-50"
+                  : isComplete
+                    ? "border-open/60 bg-white"
+                    : "focus:border-brand-400 focus:bg-white"
+              }`}
+            />
+            {isComplete && !error && (
+              <Check
+                size={20}
+                className="text-open absolute right-4 top-1/2 -translate-y-1/2"
+                aria-hidden="true"
+              />
+            )}
+          </div>
+
+          {error ? (
+            <p
+              id="plate-error"
+              role="alert"
+              className="mt-3 flex items-start gap-2 rounded-[0.625rem] bg-red-50 px-3 py-2.5 text-xs font-medium text-red-700"
+            >
+              <AlertCircle size={15} className="mt-px shrink-0" />
+              {error.message}
+            </p>
+          ) : (
+            <p id="plate-hint" className="text-ink-400 mt-3 text-center text-xs">
+              Format: three letters, four digits — e.g. ABC-1234
+            </p>
+          )}
+
+          {writeError && (
+            <p
+              role="alert"
+              className="mt-3 flex items-start gap-2 rounded-[0.625rem] bg-red-50 px-3 py-2.5 text-xs font-medium leading-relaxed text-red-700"
+            >
+              <AlertCircle size={15} className="mt-px shrink-0" />
+              {writeError}
+            </p>
+          )}
+
           <button
-            type="button"
-            onClick={handleGenerate}
-            disabled={isGenerating}
-            className={`w-full rounded-lg bg-[#F5A623] py-2.5 text-[clamp(12px,1.4vw,14px)] font-semibold text-white transition disabled:opacity-70 ${error ? "mt-1" : "mt-3"}`}
+            type="submit"
+            disabled={isGenerating || !isComplete}
+            className="pc-btn pc-btn-primary mt-5 w-full"
           >
-            {isGenerating ? "Generating..." : "Generate QR Code"}
+            {isGenerating && <Loader2 size={16} className="animate-spin" />}
+            {isGenerating ? "Creating ticket…" : "Generate QR code"}
           </button>
-        </div>
-      </div>
+        </form>
+
+        <p className="text-ink-400 mt-4 text-center text-xs">
+          The ticket is saved to the campus log the moment it is created.
+        </p>
+      </main>
     </div>
   );
 }

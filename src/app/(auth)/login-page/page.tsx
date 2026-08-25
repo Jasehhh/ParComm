@@ -3,7 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { AlertCircle, ArrowRight, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
 import { attemptLogin } from "@/lib/authResult";
+import { Wordmark } from "@/components/Wordmark";
+
+const ROLE_HOME: Record<string, string> = {
+  "admin@cpu.edu.ph": "/admin/dashboard",
+  "guard@cpu.edu.ph": "/guard",
+};
 
 export default function DashboardLoginPage() {
   const [email, setEmail] = useState("");
@@ -23,21 +30,19 @@ export default function DashboardLoginPage() {
       const user = await attemptLogin(email, password);
 
       if (!user.ok) {
-        setError("Invalid Credentials. Please try again.");
+        setError("Invalid credentials. Please try again.");
         setLoading(false);
         return;
       }
 
-      const emailValue = user.value.user.email?.toLowerCase();
+      const destination = ROLE_HOME[user.value.user.email?.toLowerCase() ?? ""];
 
-      if (emailValue === "admin@cpu.edu.ph") {
-        router.push("/admin/dashboard");
-      } else if (emailValue === "guard@cpu.edu.ph") {
-        router.push("/guard");
+      if (destination) {
+        router.push(destination);
       } else {
-        setError("Invalid Credentials. Please try again.");
+        setError("This account is not registered as guard or admin staff.");
       }
-    } catch (err) {
+    } catch {
       setError("Invalid credentials. Please try again.");
     } finally {
       setLoading(false);
@@ -45,130 +50,135 @@ export default function DashboardLoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-[#F5A623] p-4 font-sans">
-      <div className="relative w-full max-w-[420px] rounded-[24px] bg-[#F6F2D9] px-5 pb-5 pt-[clamp(38px,6vw,52px)] shadow-sm">
-        <div className="absolute -top-16 left-1/2 -translate-x-1/2">
-          <div className="flex h-25 w-25 items-center justify-center overflow-hidden rounded-full mb bg-white shadow-md">
-            <Image
-              src="/parcomm-logo.png"
-              alt="ParComm"
-              width={48}
-              height={48}
-              className="translate-x-[2.5px] object-contain"
-            />
-          </div>
-        </div>
+    <main className="bg-brand-400 relative flex min-h-screen w-full items-center justify-center overflow-hidden p-4 sm:p-6">
+      {/* Depth wash so the flat amber does not read as a solid block */}
+      <div
+        aria-hidden="true"
+        className="bg-brand-300 pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full blur-3xl opacity-70"
+      />
+      <div
+        aria-hidden="true"
+        className="bg-brand-600 pointer-events-none absolute -bottom-32 -right-20 h-80 w-80 rounded-full blur-3xl opacity-30"
+      />
 
-        <div className="flex flex-col items-center text-center">
-          <h1 className="text-[clamp(20px,4vw,35px)] font-bold leading-tight text-black">
-            Welcome to ParComm
-          </h1>
-          <p className="mt-1 text-[clamp(14px,2vw,18px)] text-black/70">
-            Choose how you&apos;d like to continue.
-          </p>
-        </div>
-
-        <div className="mt-5">
-          <button
-            type="button"
-            onClick={() => router.push("/user")}
-            className="w-full rounded-[14px] bg-[#F5A623] py-3 text-[clamp(16px,2vw,18px)] font-semibold text-white shadow-sm transition-transform hover:scale-[1.01]"
-          >
-            Continue as User
-          </button>
-        </div>
-
-        <div className="mt-4 text-center">
-          <button
-            type="button"
-            onClick={() => setShowStaffLogin((prev) => !prev)}
-            className="text-[clamp(12px,1.4vw,13px)] font-medium text-black/60 underline underline-offset-2 transition-colors hover:text-black/80"
-          >
-            Continue as Guard/Admin
-          </button>
-        </div>
-
-        <div
-          className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
-            showStaffLogin ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-          }`}
-        >
-          <div className="overflow-hidden">
-            <div className="mt-5 flex items-center gap-3">
-              <div className="h-px flex-1 bg-black/25" />
-              <span className="text-[clamp(9px,1.2vw,11px)] font-medium tracking-[0.16em] text-black/60 uppercase">
-                Guard / Admin Sign In
-              </span>
-              <div className="h-px flex-1 bg-black/25" />
+      <div className="pc-rise relative w-full max-w-[26rem]">
+        <div className="pc-card shadow-raised overflow-hidden">
+          <div className="flex flex-col items-center px-6 pb-6 pt-8 text-center sm:px-8">
+            <div className="border-sand-200 flex h-16 w-16 items-center justify-center rounded-2xl border bg-white shadow-sm">
+              <Image
+                src="/parcomm-logo.png"
+                alt=""
+                width={40}
+                height={40}
+                className="object-contain"
+                priority
+              />
             </div>
 
-            <form onSubmit={handleLogin} className="mt-5 flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <label className="text-[clamp(14px,1.8vw,16px)] font-medium text-black">
-                  Email Address
-                </label>
-                <input
-                  type="text"
-                  inputMode="email"
-                  required={showStaffLogin}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="ParComm@cpu.edu.ph"
-                  className="w-full rounded-[12px] border border-[#D8CDA7] bg-[#E7E0CF] px-3 py-3 text-[clamp(14px,1.8vw,16px)] text-[#111111] outline-none placeholder:text-black/50"
-                />
-              </div>
+            <h1 className="text-ink-900 mt-5 text-2xl font-extrabold tracking-tight">
+              Welcome to <Wordmark size="lg" className="align-baseline" />
+            </h1>
+            <p className="text-ink-500 mt-2 text-sm">
+              Live parking availability across the CPU campus.
+            </p>
 
-              <div className="flex flex-col gap-2">
-                <label className="text-[clamp(14px,1.8vw,16px)] font-medium text-black">
-                  Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required={showStaffLogin}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    className="w-full rounded-[12px] border border-[#D8CDA7] bg-[#E7E0CF] px-3 py-3 pr-11 text-[clamp(14px,1.8vw,16px)] text-[#111111] outline-none placeholder:text-black/50"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute inset-y-0 right-0 flex items-center justify-center px-3 text-[#5B5B5B]"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                  >
-                    {showPassword ? (
-                      <svg viewBox="0 0 24 24" className="h-4 w-4 fill-none stroke-current stroke-[1.8]" aria-hidden="true">
-                        <path d="M3 3l18 18" />
-                        <path d="M10.58 10.58A2 2 0 0 0 13.42 13.42" />
-                        <path d="M9.88 5.08A10.94 10.94 0 0 1 12 5c4.42 0 8.25 2.52 10 7-1.13 2.76-3.27 5.02-5.92 6.2" />
-                        <path d="M14.12 18.92A10.97 10.97 0 0 1 12 19c-4.42 0-8.25-2.52-10-7 1.16-2.82 3.35-5.11 6.06-6.3" />
-                      </svg>
-                    ) : (
-                      <svg viewBox="0 0 24 24" className="h-4 w-4 fill-none stroke-current stroke-[1.8]" aria-hidden="true">
-                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                    )}
+            <button
+              type="button"
+              onClick={() => router.push("/user")}
+              className="pc-btn pc-btn-primary mt-6 w-full"
+            >
+              Continue as student
+              <ArrowRight size={18} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowStaffLogin((prev) => !prev)}
+              aria-expanded={showStaffLogin}
+              className="text-ink-500 hover:text-ink-800 mt-4 inline-flex items-center gap-1.5 text-sm font-medium transition-colors"
+            >
+              <ShieldCheck size={15} />
+              {showStaffLogin ? "Hide staff sign in" : "Sign in as guard or admin"}
+            </button>
+          </div>
+
+          <div
+            className={`grid transition-[grid-template-rows] duration-300 ease-out ${
+              showStaffLogin ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+            }`}
+          >
+            <div className="overflow-hidden">
+              <div className="border-sand-200 bg-sand-50 border-t px-6 py-6 sm:px-8">
+                <p className="pc-eyebrow text-center">Staff sign in</p>
+
+                <form onSubmit={handleLogin} className="mt-5 flex flex-col gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="email" className="text-ink-800 text-sm font-medium">
+                      Email address
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      inputMode="email"
+                      autoComplete="username"
+                      required={showStaffLogin}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@cpu.edu.ph"
+                      className="pc-field"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="password" className="text-ink-800 text-sm font-medium">
+                      Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        autoComplete="current-password"
+                        required={showStaffLogin}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter your password"
+                        className="pc-field pr-12"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        className="text-ink-400 hover:text-ink-700 absolute inset-y-0 right-0 flex w-11 items-center justify-center transition-colors"
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                      >
+                        {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {error && (
+                    <p
+                      role="alert"
+                      className="flex items-start gap-2 rounded-[0.625rem] bg-red-50 px-3 py-2.5 text-xs font-medium text-red-700"
+                    >
+                      <AlertCircle size={15} className="mt-px shrink-0" />
+                      {error}
+                    </p>
+                  )}
+
+                  <button type="submit" disabled={loading} className="pc-btn pc-btn-dark w-full">
+                    {loading && <Loader2 size={16} className="animate-spin" />}
+                    {loading ? "Signing in…" : "Log in"}
                   </button>
-                </div>
+                </form>
               </div>
-
-              {error && (
-                <p className="text-center text-[clamp(11px,1.3vw,13px)] text-red-600">{error}</p>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="mt-2 w-full rounded-[14px] bg-[#F5A623] py-3 text-[clamp(16px,2vw,18px)] font-semibold text-white transition-opacity disabled:opacity-60"
-              >
-                {loading ? "Logging in..." : "Log in"}
-              </button>
-            </form>
+            </div>
           </div>
         </div>
+
+        <p className="mt-5 text-center text-xs font-medium text-white/80">
+          Central Philippine University · Vehicle Monitoring
+        </p>
       </div>
-    </div>
+    </main>
   );
 }

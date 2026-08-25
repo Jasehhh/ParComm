@@ -36,3 +36,41 @@ export const combineValidators = <T, E>(
     (result, validator) => andThen(result, validator),
     { ok: true, value } as Result<T, E>
   );
+
+/**
+ * converge — Higher-Order Function
+ * Feeds one input to several functions, then combines their results.
+ * Lets a value be split, transformed independently, and rejoined without
+ * introducing intermediate variables.
+ */
+export const converge =
+  <T, A, B, R>(combine: (a: A, b: B) => R, toA: (value: T) => A, toB: (value: T) => B) =>
+  (value: T): R =>
+    combine(toA(value), toB(value));
+
+/**
+ * combinePredicates — Higher-Order Function
+ * Merges independent predicates into a single one that holds only when every
+ * predicate holds. The counterpart of combineValidators for plain filtering.
+ */
+export const combinePredicates =
+  <T>(predicates: Array<(value: T) => boolean>) =>
+  (value: T): boolean =>
+    predicates.every((predicate) => predicate(value));
+
+/**
+ * unique — pure de-duplication, preserving first-seen order.
+ * Returns a new array; the input is never touched.
+ */
+export const unique = <T>(items: readonly T[]): T[] =>
+  items.filter((item, index) => items.indexOf(item) === index);
+
+/**
+ * sortBy — Higher-Order Function
+ * Orders by a derived key. Copies first, so unlike Array.prototype.sort it
+ * leaves the input array unchanged.
+ */
+export const sortBy =
+  <T>(toKey: (value: T) => string) =>
+  (items: readonly T[]): T[] =>
+    [...items].sort((a, b) => toKey(a).localeCompare(toKey(b)));

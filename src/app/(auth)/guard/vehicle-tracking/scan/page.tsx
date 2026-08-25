@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ChevronDown, ChevronLeft, LogIn, LogOut, MapPin, ScanLine, X } from "lucide-react";
 import { Html5Qrcode, Html5QrcodeScannerState } from "html5-qrcode";
 import { processTicketScan, subscribeToParkingAreas } from "@/lib/services/db";
 import type { ParkingArea } from "@/lib/types/schema";
@@ -11,12 +11,12 @@ import type { ParkingArea } from "@/lib/types/schema";
 export default function ScanQRPage() {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [error, setError] = useState("");
-  
+
   // New State Management to handle UI screens smoothly
   const [isProcessing, setIsProcessing] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [rejectMessage, setRejectMessage] = useState(""); // New rejection state
-  
+
   const router = useRouter();
 
   // Dynamic Parking Areas State
@@ -24,7 +24,7 @@ export default function ScanQRPage() {
 
   // Dropdown States
   const [action, setAction] = useState<"Parked" | "Exited">("Parked");
-  const [location, setLocation] = useState<string>(""); 
+  const [location, setLocation] = useState<string>("");
 
   const actionRef = useRef(action);
   const locationRef = useRef(location);
@@ -41,7 +41,7 @@ export default function ScanQRPage() {
   useEffect(() => {
     const unsubscribe = subscribeToParkingAreas((liveData) => {
       setParkingAreas(liveData);
-      setLocation(current => {
+      setLocation((current) => {
         if (!current && liveData.length > 0) {
           return liveData[0].id;
         }
@@ -78,27 +78,26 @@ export default function ScanQRPage() {
 
     async function handleScanResult(decodedText: string) {
       setIsProcessing(true);
-      setError(""); 
+      setError("");
       setRejectMessage("");
-      
+
       try {
         const { plateNumber, newStatus } = await processTicketScan(
-          decodedText, 
-          locationRef.current, 
+          decodedText,
+          locationRef.current,
           actionRef.current
         );
-        
+
         setIsProcessing(false);
         setSuccessMessage(`Vehicle ${plateNumber} is now ${newStatus}!`);
-        
-        setTimeout(() => {
-           router.push("/guard/vehicle-tracking"); 
-        }, 2000);
 
-      } catch (err: any) {
-        // If the database blocks the scan (e.g. capacity full), show the big red screen!
+        setTimeout(() => {
+          router.push("/guard/vehicle-tracking");
+        }, 2000);
+      } catch (err) {
+        // If the database blocks the scan (e.g. capacity full), show the rejection screen
         setIsProcessing(false);
-        setRejectMessage(err.message || "Failed to process QR code");
+        setRejectMessage(err instanceof Error ? err.message : "Failed to process QR code");
       }
     }
 
@@ -138,104 +137,232 @@ export default function ScanQRPage() {
     };
   }, [router]);
 
+  const isScanning = !isProcessing && !successMessage && !rejectMessage;
+  const isExit = action === "Exited";
+
   return (
-    <div className="min-h-screen w-full flex flex-col font-sans">
-      <div className="bg-[#F5A623] p-4">
-        <div className="flex items-center gap-2 font-bold text-black">
-          <Link href="/guard/vehicle-tracking" className="flex cursor-pointer items-center" aria-label="Go back">
+    <div className="bg-ink-900 flex min-h-screen w-full flex-col text-white">
+      <header className="bg-brand-400 text-ink-900 sticky top-0 z-20">
+        <div className="mx-auto flex w-full max-w-md items-center gap-2 px-4 py-3">
+          <Link
+            href="/guard/vehicle-tracking"
+            className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-black/10"
+            aria-label="Go back"
+          >
             <ChevronLeft size={22} />
           </Link>
-          <span className="text-lg">Scan QR Code</span>
+          <span className="min-w-0">
+            <span className="block text-base font-bold leading-tight">Scan QR code</span>
+            <span className="text-ink-900/65 block text-xs">
+              {isExit ? "Logging vehicles out" : "Logging vehicles in"}
+            </span>
+          </span>
         </div>
-      </div>
+      </header>
 
-      <div className="flex flex-1 flex-col items-center justify-start pt-8 gap-5 bg-black p-6">
-        
-        {/* State 1: Dropdowns & Scanning Camera */}
-        {!isProcessing && !successMessage && !rejectMessage && (
-           <>
-             <div className="flex w-full max-w-[280px] flex-col gap-4 mb-2">
-               <div>
-                 <label className="text-[11px] font-bold tracking-widest text-[#F5A623] uppercase">Scanner Action</label>
-                 <select
-                   value={action}
-                   onChange={(e) => setAction(e.target.value as "Parked" | "Exited")}
-                   className="mt-1 w-full rounded-lg border-2 border-[#F5A623] bg-[#1A1A1A] p-2.5 text-[14px] font-semibold text-white outline-none focus:ring-2 focus:ring-[#F5A623]"
-                 >
-                   <option value="Parked">Logging IN (Park Vehicle)</option>
-                   <option value="Exited">Logging OUT (Exit Vehicle)</option>
-                 </select>
-               </div>
-               
-               <div className={action === "Exited" ? "opacity-50 pointer-events-none" : ""}>
-                 <label className="text-[11px] font-bold tracking-widest text-[#F5A623] uppercase">Parking Area</label>
-                 <select
-                   value={location}
-                   onChange={(e) => setLocation(e.target.value)}
-                   disabled={action === "Exited"}
-                   className="mt-1 w-full rounded-lg border-2 border-[#F5A623] bg-[#1A1A1A] p-2.5 text-[14px] font-semibold text-white outline-none focus:ring-2 focus:ring-[#F5A623]"
-                 >
-                   {parkingAreas.length === 0 ? (
-                     <option value="" disabled>Loading locations...</option>
-                   ) : (
-                     parkingAreas.map((area) => (
-                       <option key={area.id} value={area.id}>
-                         {area.name}
-                       </option>
-                     ))
-                   )}
-                 </select>
-               </div>
-             </div>
+      <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-4 pb-8 pt-5">
+        {isScanning && (
+          <>
+            {/* Direction of the scan — the single most consequential choice here */}
+            <div>
+              <p className="text-brand-300 text-[11px] font-bold uppercase tracking-[0.12em]">
+                Scanner action
+              </p>
+              <div
+                role="radiogroup"
+                aria-label="Scanner action"
+                className="mt-2 grid grid-cols-2 gap-1.5 rounded-[0.875rem] bg-white/10 p-1.5"
+              >
+                <ActionToggle
+                  active={!isExit}
+                  onClick={() => setAction("Parked")}
+                  icon={<LogIn size={16} />}
+                  label="Park in"
+                />
+                <ActionToggle
+                  active={isExit}
+                  onClick={() => setAction("Exited")}
+                  icon={<LogOut size={16} />}
+                  label="Exit out"
+                />
+              </div>
+            </div>
 
-             <div id="qr-reader" className="aspect-square w-full max-w-[280px] overflow-hidden rounded-[12px] border-2 border-stone-700" />
-             {error && <p className="text-sm text-red-400 text-center font-bold">{error}</p>}
-             <p className="text-sm text-white/50">Align the QR code inside frame.</p>
-           </>
+            <div className={`mt-5 transition-opacity ${isExit ? "opacity-40" : ""}`}>
+              <p className="text-brand-300 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em]">
+                <MapPin size={13} />
+                Parking area
+              </p>
+              {/* A select, not chips — the building list grows over time */}
+              <div className="relative mt-2">
+                <label className="sr-only" htmlFor="scan-location">
+                  Parking area
+                </label>
+                <select
+                  id="scan-location"
+                  value={location}
+                  disabled={isExit || parkingAreas.length === 0}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="border-brand-400 focus:ring-brand-400 w-full appearance-none rounded-[0.75rem] border-2 bg-[#1A1A1A] py-3 pl-3.5 pr-10 text-[15px] font-semibold text-white outline-none focus:ring-2 disabled:cursor-not-allowed"
+                >
+                  {parkingAreas.length === 0 ? (
+                    <option value="">Loading locations…</option>
+                  ) : (
+                    parkingAreas.map((area) => (
+                      <option key={area.id} value={area.id}>
+                        {area.name}
+                      </option>
+                    ))
+                  )}
+                </select>
+                <ChevronDown
+                  size={18}
+                  className="text-brand-400 pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2"
+                />
+              </div>
+              {isExit && (
+                <p className="mt-2 text-xs text-white/45">
+                  Exits are matched to the lot the vehicle parked in.
+                </p>
+              )}
+            </div>
+
+            {/* Camera viewport */}
+            <div className="relative mx-auto mt-6 aspect-square w-full max-w-[300px]">
+              <div
+                id="qr-reader"
+                className="h-full w-full overflow-hidden rounded-[1.25rem] bg-black"
+              />
+
+              {/* Framing overlay drawn on top of the video feed */}
+              <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[1.25rem]">
+                {["left-3 top-3 border-l-2 border-t-2 rounded-tl-lg",
+                  "right-3 top-3 border-r-2 border-t-2 rounded-tr-lg",
+                  "left-3 bottom-3 border-l-2 border-b-2 rounded-bl-lg",
+                  "right-3 bottom-3 border-r-2 border-b-2 rounded-br-lg",
+                ].map((corner) => (
+                  <span key={corner} className={`border-brand-400 absolute h-9 w-9 ${corner}`} />
+                ))}
+                <span className="via-brand-400 pc-scanline absolute inset-x-8 top-1/2 h-0.5 bg-gradient-to-r from-transparent to-transparent" />
+              </div>
+            </div>
+
+            {error ? (
+              <p role="alert" className="mt-4 text-center text-sm font-semibold text-red-400">
+                {error}
+              </p>
+            ) : (
+              <p className="mt-4 flex items-center justify-center gap-2 text-center text-sm text-white/55">
+                <ScanLine size={15} />
+                Align the QR code inside the frame
+              </p>
+            )}
+          </>
         )}
 
-        {/* State 2: Processing in Database */}
         {isProcessing && (
-           <div className="flex flex-1 flex-col items-center justify-center">
-             <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#F5A623] border-t-transparent"></div>
-             <p className="mt-4 text-white font-bold animate-pulse">Processing Ticket...</p>
-           </div>
+          <div className="flex flex-1 flex-col items-center justify-center">
+            <div className="border-brand-400 h-12 w-12 animate-spin rounded-full border-4 border-t-transparent" />
+            <p className="mt-4 font-semibold text-white/90">Processing ticket…</p>
+          </div>
         )}
 
-        {/* State 3: Success Result */}
         {successMessage && (
-           <div className="flex flex-1 flex-col items-center justify-center text-center">
-             <div className="h-16 w-16 rounded-full bg-green-500 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(34,197,94,0.4)]">
-               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
-               </svg>
-             </div>
-             <p className="text-2xl font-bold text-green-400 mb-2">Success!</p>
-             <p className="text-white text-lg font-medium">{successMessage}</p>
-             <p className="text-gray-400 text-sm mt-6">Redirecting...</p>
-           </div>
+          <ResultScreen
+            tone="success"
+            title="Logged"
+            message={successMessage}
+            footer={<p className="text-sm text-white/45">Returning to vehicle tracking…</p>}
+          />
         )}
 
-        {/* State 4: THE NEW REJECTION SCREEN */}
         {rejectMessage && (
-           <div className="flex flex-1 flex-col items-center justify-center text-center px-4">
-             <div className="h-16 w-16 rounded-full bg-red-500 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(239,68,68,0.4)]">
-               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path>
-               </svg>
-             </div>
-             <p className="text-2xl font-bold text-red-400 mb-2">Action Denied</p>
-             <p className="text-white text-lg font-medium">{rejectMessage}</p>
-             <button
-               onClick={() => window.location.reload()} // Cleanly reboots the camera
-               className="mt-8 rounded-full bg-[#F5A623] px-8 py-3 font-bold text-black transition-colors hover:bg-amber-400"
-             >
-               Try Again
-             </button>
-           </div>
+          <ResultScreen
+            tone="error"
+            title="Action denied"
+            message={rejectMessage}
+            footer={
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="pc-btn pc-btn-primary"
+              >
+                Try again
+              </button>
+            }
+          />
         )}
-        
+      </main>
+    </div>
+  );
+}
+
+function ActionToggle({
+  active,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={active}
+      onClick={onClick}
+      className={`flex items-center justify-center gap-2 rounded-[0.625rem] py-2.5 text-sm font-bold transition-colors ${
+        active ? "bg-brand-400 text-ink-900 shadow-sm" : "text-white/65 hover:text-white"
+      }`}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+function ResultScreen({
+  tone,
+  title,
+  message,
+  footer,
+}: {
+  tone: "success" | "error";
+  title: string;
+  message: string;
+  footer: React.ReactNode;
+}) {
+  const success = tone === "success";
+
+  return (
+    <div className="pc-rise flex flex-1 flex-col items-center justify-center gap-4 text-center">
+      <div
+        className={`flex h-16 w-16 items-center justify-center rounded-full ${
+          success ? "bg-open shadow-[0_0_28px_rgba(46,158,79,0.45)]" : "bg-full shadow-[0_0_28px_rgba(211,58,44,0.45)]"
+        }`}
+      >
+        {success ? (
+          <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+          </svg>
+        ) : (
+          <X className="h-8 w-8 text-white" strokeWidth={3} />
+        )}
       </div>
+
+      <div>
+        <p
+          className={`text-2xl font-extrabold tracking-tight ${success ? "text-open" : "text-full"}`}
+        >
+          {title}
+        </p>
+        <p className="mt-1.5 text-base font-medium text-white/90">{message}</p>
+      </div>
+
+      <div className="mt-2">{footer}</div>
     </div>
   );
 }

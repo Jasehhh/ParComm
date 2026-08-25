@@ -1,33 +1,189 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+   ParComm design tokens
+   Warm campus palette: amber brand, sand surfaces, ink text.
+   --------------------------------------------------------------------------- */
+@theme {
+  /* Brand — amber through burnt orange */
+  --color-brand-50: #fff8ec;
+  --color-brand-100: #ffeccd;
+  --color-brand-200: #fcd694;
+  --color-brand-300: #f9be5b;
+  --color-brand-400: #f5a623;
+  --color-brand-500: #e08c10;
+  --color-brand-600: #c26f12;
+  --color-brand-700: #96520f;
+
+  /* Sand — page and inset surfaces */
+  --color-sand-50: #fdfaf1;
+  --color-sand-100: #f8f3e3;
+  --color-sand-200: #efe8d1;
+  --color-sand-300: #e2d8bd;
+  --color-sand-400: #cbbf9f;
+
+  /* Ink — text and hairlines */
+  --color-ink-900: #1c1814;
+  --color-ink-800: #322b23;
+  --color-ink-700: #4d4438;
+  --color-ink-500: #7b7062;
+  --color-ink-400: #9a9183;
+  --color-ink-300: #bcb4a6;
+
+  /* Occupancy semantics */
+  --color-open: #2e9e4f;
+  --color-tight: #e2820e;
+  --color-full: #d33a2c;
+
+  --font-sans: var(--font-inter), "Segoe UI", system-ui, sans-serif;
+  --font-mono: var(--font-mono-stack);
+
+  --radius-card: 1rem;
+  --radius-field: 0.75rem;
+
+  --shadow-card: 0 1px 2px rgb(28 24 20 / 0.04), 0 6px 18px -8px rgb(28 24 20 / 0.14);
+  --shadow-raised: 0 2px 4px rgb(28 24 20 / 0.06), 0 14px 32px -12px rgb(28 24 20 / 0.22);
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 :root {
-  --background: #f6f2d9;
-  --foreground: #171717;
-  --font-inter: "Inter", "Segoe UI", sans-serif;
+  --font-mono-stack: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", monospace;
+  --background: var(--color-sand-50);
+  --foreground: var(--color-ink-900);
+  color-scheme: light;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
 }
 
-* {
-  box-sizing: border-box;
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Numbers in stats should not jitter as they tick */
+  :is(h1, h2, h3, th, td, output) {
+    font-variant-numeric: tabular-nums;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background: var(--color-brand-200);
+    color: var(--color-ink-900);
+  }
 }
 
-html {
-  font-family: var(--font-inter);
+@layer components {
+  /* Elevated white card on the sand page */
+  .pc-card {
+    background: #fff;
+    border: 1px solid var(--color-sand-200);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Section label above a group of content */
+  .pc-eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--color-ink-500);
+  }
+
+  .pc-field {
+    width: 100%;
+    border: 1px solid var(--color-sand-300);
+    border-radius: var(--radius-field);
+    background: #fff;
+    padding: 0.75rem 0.875rem;
+    font-size: 0.9375rem;
+    color: var(--color-ink-900);
+    transition: border-color 140ms ease, box-shadow 140ms ease;
+  }
+
+  .pc-field::placeholder {
+    color: var(--color-ink-300);
+  }
+
+  .pc-field:focus {
+    outline: none;
+    border-color: var(--color-brand-400);
+    box-shadow: 0 0 0 3px var(--color-brand-100);
+  }
+
+  .pc-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: var(--radius-field);
+    padding: 0.8125rem 1.125rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1;
+    transition: background-color 140ms ease, transform 140ms var(--ease-out-soft),
+      box-shadow 140ms ease, opacity 140ms ease;
+  }
+
+  .pc-btn:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  .pc-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .pc-btn-primary {
+    background: var(--color-brand-400);
+    color: #fff;
+    box-shadow: 0 1px 2px rgb(150 82 15 / 0.25), 0 8px 16px -10px rgb(150 82 15 / 0.6);
+  }
+
+  .pc-btn-primary:hover:not(:disabled) {
+    background: var(--color-brand-500);
+  }
+
+  .pc-btn-dark {
+    background: var(--color-ink-900);
+    color: #fff;
+  }
+
+  .pc-btn-dark:hover:not(:disabled) {
+    background: var(--color-ink-800);
+  }
+
+  .pc-btn-ghost {
+    background: transparent;
+    color: var(--color-ink-700);
+    border: 1px solid var(--color-sand-300);
+  }
+
+  .pc-btn-ghost:hover:not(:disabled) {
+    background: var(--color-sand-100);
+  }
 }
 
-body {
-  margin: 0;
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-inter);
-  min-height: 100vh;
-}
-
+/* --- QR camera surface ------------------------------------------------- */
 #qr-reader,
 #qr-reader > div {
   height: 100%;
@@ -39,13 +195,32 @@ body {
   object-fit: cover;
 }
 
-@keyframes grow-logo {
+/* html5-qrcode injects its own chrome; we draw our own frame instead */
+#qr-reader img[alt="Info icon"],
+#qr-reader__dashboard_section_csr span,
+#qr-reader__status_span {
+  display: none !important;
+}
+
+/* --- Motion ------------------------------------------------------------- */
+@keyframes pc-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pc-logo-in {
   0% {
-    transform: scale(0.8);
-    opacity: 0.7;
+    transform: scale(0.86);
+    opacity: 0;
   }
   60% {
-    transform: scale(1.08);
+    transform: scale(1.04);
     opacity: 1;
   }
   100% {
@@ -54,7 +229,92 @@ body {
   }
 }
 
+@keyframes pc-pulse-ring {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.55;
+  }
+  70%,
+  100% {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+
+@keyframes pc-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes pc-shimmer {
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pc-sweep {
+  0%,
+  100% {
+    transform: translateY(-42%);
+  }
+  50% {
+    transform: translateY(42%);
+  }
+}
 
 .animate-grow-logo {
-  animation: grow-logo 1.5s ease-out both;
+  animation: pc-logo-in 1.1s var(--ease-out-soft) both;
+}
+
+.pc-rise {
+  animation: pc-rise 420ms var(--ease-out-soft) both;
+}
+
+.pc-live-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: currentColor;
+  animation: pc-pulse-ring 2s ease-out infinite;
+}
+
+.pc-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-sand-200) 25%,
+    var(--color-sand-100) 37%,
+    var(--color-sand-200) 63%
+  );
+  background-size: 200% 100%;
+  animation: pc-shimmer 1.4s linear infinite;
+}
+
+.pc-scanline {
+  animation: pc-sweep 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* --- Print: ticket only ------------------------------------------------- */
+@media print {
+  body {
+    background: #fff;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
 }
