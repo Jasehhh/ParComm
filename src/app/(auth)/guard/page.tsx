@@ -99,7 +99,6 @@ export default function GuardDashboardPage() {
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div className="min-w-0">
             <h1 className="text-ink-900 text-2xl font-extrabold tracking-tight">Guard console</h1>
-            <p className="text-ink-500 mt-1 truncate text-sm">{user.email}</p>
           </div>
           <span
             className="rounded-full px-3 py-1.5 text-xs font-bold"

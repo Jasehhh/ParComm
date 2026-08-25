@@ -3,16 +3,7 @@
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
-type AppBarProps = {
-  title: string;
-  subtitle?: string;
-  /** Where the back chevron goes. Omit to pop the history stack. */
-  backHref?: string;
-  right?: React.ReactNode;
-  tone?: "brand" | "plain";
-  className?: string;
-};
+import type { AppBarProps } from "@/lib/types/types";
 
 export function AppBar({
   title,

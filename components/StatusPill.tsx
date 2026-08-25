@@ -1,11 +1,5 @@
-import type { ParkingStatus } from "@/lib/parkingStatus";
+import type { StatusPillProps } from "@/lib/types/types";
 
-type StatusPillProps = {
-  status: ParkingStatus;
-  /** solid = filled chip, soft = tinted chip with colored text */
-  variant?: "soft" | "solid";
-  className?: string;
-};
 
 export function StatusPill({ status, variant = "soft", className = "" }: StatusPillProps) {
   const soft = variant === "soft";

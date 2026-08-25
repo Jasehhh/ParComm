@@ -9,106 +9,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { AppBar } from "@/components/AppBar";
 import { Wordmark, Tagline } from "@/components/Wordmark";
 
-const VALID_FOR_HOURS = 10;
-
-/**
- * Thermal-receipt print layout: 80mm roll, single column, QR blown up to fill
- * the paper width. Everything forced to pure black so it survives a monochrome
- * ticket printer.
- */
-const TICKET_PRINT_CSS = `
-@media print {
-  @page { size: 80mm auto; margin: 4mm; }
-
-  html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
-
-  /* Strip the app chrome: the roll holds the stub and nothing else */
-  .pc-ticket-page { min-height: 0 !important; display: block !important; }
-  .pc-ticket-main {
-    max-width: none !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    display: block !important;
-  }
-
-  /*
-    Pinned to a fixed receipt width rather than 100%. Browsers routinely ignore
-    @page size and print onto the selected paper (A4/Letter), which stretched
-    the stub across the sheet — this keeps it a narrow slip on any paper.
-  */
-  .pc-ticket {
-    width: min(140mm, 100%) !important;
-    max-width: min(140mm, 100%) !important;
-    margin: 0 auto !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    background: #fff !important;
-    animation: none !important;
-    overflow: visible !important;
-  }
-
-  /* Monochrome: brand amber prints as pale grey on thermal paper */
-  .pc-ticket, .pc-ticket * { color: #000 !important; }
-
-  .pc-ticket-head { padding: 0 0 2mm !important; }
-
-  .pc-ticket-logo {
-    width: min(30mm, 22%) !important;
-    height: auto !important;
-    margin: 0 auto 4mm !important;
-    display: block !important;
-  }
-
-  /* Wordmark carries its own size class on an inner span — reach it too */
-  .pc-ticket-brand, .pc-ticket-brand * { font-size: 34pt !important; line-height: 1 !important; }
-  .pc-ticket-tagline { font-size: 11pt !important; margin-top: 1mm !important; }
-
-  /* The QR is the point of the slip — fill the printable width */
-  .pc-ticket-qr {
-    margin: 8mm auto 0 !important;
-    padding: 0 !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    width: min(108mm, 92%) !important;
-  }
-  .pc-ticket-qr svg {
-    width: 100% !important;
-    height: auto !important;
-    display: block;
-    shape-rendering: crispEdges;
-  }
-
-  .pc-ticket-id {
-    font-size: 26pt !important;
-    margin-top: 6mm !important;
-    letter-spacing: 0.06em !important;
-  }
-
-  .pc-ticket-tear { height: 6mm !important; margin: 4mm 0 !important; }
-
-  .pc-ticket-meta {
-    display: block !important;
-    padding: 0 !important;
-    text-align: center !important;
-  }
-  .pc-ticket-meta > div { padding: 0 !important; margin-top: 5mm !important; }
-  .pc-ticket-plate { font-size: 32pt !important; letter-spacing: 0.08em !important; }
-  .pc-ticket-valid { font-size: 13pt !important; }
-
-  .pc-ticket .pc-eyebrow { font-size: 10pt !important; }
-
-  .pc-ticket-footer {
-    display: block !important;
-    margin-top: 8mm !important;
-    padding-top: 3mm !important;
-    border-top: 1px dashed #000 !important;
-    text-align: center !important;
-    font-size: 10pt !important;
-  }
-}
-`;
+const VALID_FOR_HOURS = 12;
 
 const formatValidUntil = (date: Date): string =>
   date.toLocaleDateString("en-US", {
@@ -149,13 +50,6 @@ function ResultContent() {
 
   return (
     <div className="pc-ticket-page bg-sand-50 flex min-h-screen w-full flex-col print:bg-white">
-      {/*
-        Receipt print styles. Kept on this route (not globals.css) so the
-        80mm @page size applies only while the ticket is on screen — printing
-        the admin log elsewhere still uses the browser default paper.
-      */}
-      <style>{TICKET_PRINT_CSS}</style>
-
       <div className="print:hidden">
         <AppBar
           title="Ticket ready"
