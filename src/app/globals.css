@@ -256,13 +256,18 @@
   }
 }
 
+/*
+  Percentage translateY resolves against the element's own height, and the
+  scanline is 2px tall — so top is animated instead, which resolves against
+  the camera viewport.
+*/
 @keyframes pc-sweep {
   0%,
   100% {
-    transform: translateY(-42%);
+    top: 12%;
   }
   50% {
-    transform: translateY(42%);
+    top: 88%;
   }
 }
 
