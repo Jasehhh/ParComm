@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { ChevronDown, ChevronLeft, LogIn, LogOut, MapPin, RefreshCw, ScanLine, X } from "lucide-react";
+import { ChevronDown, LogIn, LogOut, MapPin, RefreshCw, ScanLine, X } from "lucide-react";
 import { Html5Qrcode, Html5QrcodeScannerState } from "html5-qrcode";
 import { processTicketScan, subscribeToParkingAreas } from "@/lib/services/db";
 import type { ParkingArea } from "@/lib/types/schema";
+import { AppBar } from "@/components/AppBar";
 import { RequireGuard } from "@/components/RequireGuard";
 
 export default function ScanQRPage() {
@@ -212,23 +212,11 @@ export default function ScanQRPage() {
   return (
     <RequireGuard>
       <div className="bg-ink-900 flex min-h-screen w-full flex-col text-white">
-      <header className="bg-brand-400 text-ink-900 sticky top-0 z-20">
-        <div className="mx-auto flex w-full max-w-md items-center gap-2 px-4 py-3">
-          <Link
-            href="/guard/vehicle-tracking"
-            className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-black/10"
-            aria-label="Go back"
-          >
-            <ChevronLeft size={22} />
-          </Link>
-          <span className="min-w-0">
-            <span className="block text-base font-bold leading-tight">Scan QR code</span>
-            <span className="text-ink-900/65 block text-xs">
-              {isExit ? "Logging vehicles out" : "Logging vehicles in"}
-            </span>
-          </span>
-        </div>
-      </header>
+      <AppBar
+        title="Scan QR code"
+        subtitle={isExit ? "Logging vehicles out" : "Logging vehicles in"}
+        backHref="/guard/vehicle-tracking"
+      />
 
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-4 pb-8 pt-5">
         {isScanning && (
