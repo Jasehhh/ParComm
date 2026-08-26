@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowRight, QrCode, ScanLine } from "lucide-react";
 import { AppBar } from "@/components/AppBar";
+import { RequireGuard } from "@/components/RequireGuard";
 
 const TOOLS = [
   {
@@ -23,7 +24,8 @@ const TOOLS = [
 
 export default function VehicleTrackingPage() {
   return (
-    <div className="bg-sand-50 min-h-screen w-full">
+    <RequireGuard>
+      <div className="bg-sand-50 min-h-screen w-full">
       <AppBar title="Vehicle tracking" subtitle="Guard tools" backHref="/guard" />
 
       <main className="mx-auto w-full max-w-3xl px-4 py-6">
@@ -67,6 +69,7 @@ export default function VehicleTrackingPage() {
           Scanning updates lot occupancy instantly for everyone watching the dashboards.
         </p>
       </main>
-    </div>
+      </div>
+    </RequireGuard>
   );
 }

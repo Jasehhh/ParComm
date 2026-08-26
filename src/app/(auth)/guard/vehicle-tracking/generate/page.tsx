@@ -7,6 +7,7 @@ import { parsePlate, formatPlateInput, isCompletePlate } from "@/lib/plate";
 import { PlateError } from "@/lib/types/types";
 import { createParkingTicket } from "@/lib/services/db";
 import { AppBar } from "@/components/AppBar";
+import { RequireGuard } from "@/components/RequireGuard";
 
 /** Turn a Firestore failure into something a guard can act on. */
 function describeWriteFailure(err: unknown): string {
@@ -80,7 +81,8 @@ export default function GenerateQRCodePage() {
   const isComplete = isCompletePlate(plateNumber);
 
   return (
-    <div className="bg-sand-50 flex min-h-screen w-full flex-col">
+    <RequireGuard>
+      <div className="bg-sand-50 flex min-h-screen w-full flex-col">
       <AppBar
         title="Generate QR code"
         subtitle="New vehicle ticket"
@@ -180,6 +182,7 @@ export default function GenerateQRCodePage() {
           The ticket is saved to the campus log the moment it is created.
         </p>
       </main>
-    </div>
+      </div>
+    </RequireGuard>
   );
 }
