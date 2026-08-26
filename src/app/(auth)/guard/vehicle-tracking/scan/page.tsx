@@ -83,7 +83,10 @@ export default function ScanQRPage() {
     };
 
     const cameraErrorMessage = (err: unknown) => {
-      const name = (err as { name?: string })?.name;
+      // html5-qrcode rejects with a bare string on most paths, so fall back to
+      // matching the text when there is no DOMException name to read.
+      const text = typeof err === "string" ? err : ((err as { message?: string })?.message ?? "");
+      const name = (err as { name?: string })?.name ?? text.match(/([A-Za-z]+Error)/)?.[1];
 
       if (!window.isSecureContext) {
         return "Camera access requires HTTPS (or localhost). Open this site through its secure URL and try again.";
@@ -141,29 +144,52 @@ export default function ScanQRPage() {
 
         if (disposed) return;
 
-        const cameras = await Html5Qrcode.getCameras();
-        const rearCamera = cameras.find((camera) => /back|rear|environment/i.test(camera.label));
-        const selectedCamera = rearCamera?.id ?? cameras[0]?.id;
+        let selectedCamera: string | undefined;
+        try {
+          const cameras = await Html5Qrcode.getCameras();
+          const rearCamera = cameras.find((camera) => /back|rear|environment/i.test(camera.label));
+          selectedCamera = rearCamera?.id ?? cameras[0]?.id;
+        } catch {
+          // Enumeration can fail outright under privacy settings; the facingMode
+          // fallback below still works, so carry on without a device id.
+        }
+
+        if (disposed) return;
 
         scanner = new Html5Qrcode("qr-reader");
         scannerRef.current = scanner;
 
-        await scanner.start(
-          selectedCamera ?? { facingMode: "environment" },
-          { fps: 10, qrbox: { width: 220, height: 220 } },
-          (decodedText) => {
-            if (resultHandled || disposed) return;
+        const onDecoded = (decodedText: string) => {
+          if (resultHandled || disposed) return;
 
-            resultHandled = true;
-            stopScanner()
-              .then(() => handleScanResult(decodedText))
-              .catch(() => setError("Unable to stop the camera scanner"));
-          },
-          () => {}
-        );
+          resultHandled = true;
+          stopScanner()
+            .then(() => handleScanResult(decodedText))
+            .catch(() => setError("Unable to stop the camera scanner"));
+        };
+
+        const config = { fps: 10, qrbox: { width: 220, height: 220 } };
+
+        try {
+          await scanner.start(
+            selectedCamera ?? { facingMode: "environment" },
+            config,
+            onDecoded,
+            () => {}
+          );
+        } catch (startErr) {
+          // Brave and other browsers with fingerprinting protection hand back
+          // randomised device ids, so starting by id fails even though the
+          // camera is available. A plain facingMode constraint sidesteps it.
+          if (!selectedCamera || disposed) throw startErr;
+
+          console.error("Camera start by device id failed, retrying by facingMode", startErr);
+          await scanner.start({ facingMode: "environment" }, config, onDecoded, () => {});
+        }
 
         if (disposed) await stopScanner();
       } catch (err) {
+        console.error("Camera start failed", err);
         if (!disposed) setError(cameraErrorMessage(err));
       }
     };
@@ -287,7 +313,7 @@ export default function ScanQRPage() {
                 ].map((corner) => (
                   <span key={corner} className={`border-brand-400 absolute h-9 w-9 ${corner}`} />
                 ))}
-                <span className="via-brand-400 pc-scanline absolute inset-x-8 top-1/2 h-0.5 bg-gradient-to-r from-transparent to-transparent" />
+                <span className="via-brand-400 pc-scanline absolute inset-x-8 top-[12%] h-0.5 bg-gradient-to-r from-transparent to-transparent" />
               </div>
             </div>
 

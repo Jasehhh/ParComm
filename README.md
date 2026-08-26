@@ -13,8 +13,8 @@ students, guards, and administrators.
 | User Dashboard &mdash; live parking availability | `/user` | Implemented |
 | Guard Dashboard &mdash; occupancy view, entry point to ticketing | `/guard` | Implemented |
 | Admin Dashboard &mdash; activity log, campus totals | `/admin/dashboard` | Partial &mdash; capacity-threshold editing and peak-hour graphs pending |
-| QR Code Generator &mdash; plate validation, ticket creation | `/guard/vehicle-tracking/generate` | Implemented |
-| QR Code Scanner &mdash; camera scan on park/exit | `/guard/vehicle-tracking/scan` | Implemented |
+| QR Code Generator &mdash; plate validation, ticket creation, 12-hour expiry | `/guard/vehicle-tracking/generate` | Implemented |
+| QR Code Scanner &mdash; camera scan on park/exit, rejects expired tickets | `/guard/vehicle-tracking/scan` | Implemented |
 
 ## Tech Stack
 
@@ -57,23 +57,41 @@ guard/admin staff.
 
 ```
 src/app/
+├── layout.tsx                        root layout, fonts, global styles
+├── globals.css                       design tokens, primitives, print styles
 ├── page.tsx                          splash screen, redirects to /login-page
 ├── user/page.tsx                     student dashboard (public)
 └── (auth)/
     ├── login-page/page.tsx           combined student/guard/admin login
+    ├── admin/page.tsx                redirect guard for bare /admin
     ├── admin/dashboard/page.tsx      admin dashboard (auth-gated)
     ├── guard/page.tsx                guard dashboard (auth-gated)
     └── guard/vehicle-tracking/
-        ├── generate/                 plate entry -> ticket -> QR
-        └── scan/                     camera scan, park/exit
+        ├── page.tsx                  hub: pick scanner or generator
+        ├── generate/page.tsx         plate entry + validation
+        ├── generate/result/page.tsx  printable QR ticket
+        └── scan/page.tsx             camera scan, park/exit
+
+components/
+├── AppBar.tsx                        page header with back navigation
+├── LoadingState.tsx                  branded full-page loader
+├── LotCard.tsx                       single lot summary card
+├── LotPicker.tsx                     dropdown for choosing a lot
+├── OccupancyGauge.tsx                270° occupancy dial
+├── StatTile.tsx                      labelled stat block
+├── StatusPill.tsx                    Open / Filling / Full chip
+└── Wordmark.tsx                      ParComm logo + tagline
 
 lib/
 ├── firebase.ts                       Firebase app + auth init
 ├── authResult.ts                     login wrapped in a Result type
-├── functional.ts                     pipe, andThen, combineValidators
+├── functional.ts                     pipe, converge, combineValidators
 ├── plate.ts                          plate normalization + validation pipeline
 ├── parkingStatus.ts                  pure occupancy/status helpers
-└── services/db.ts                    all Firestore reads/writes
+├── services/db.ts                    all Firestore reads/writes
+└── types/
+    ├── schema.ts                     Firestore document shapes
+    └── types.d.ts                    shared Result, errors, component props
 ```
 
 ## Team &mdash; Group 1
