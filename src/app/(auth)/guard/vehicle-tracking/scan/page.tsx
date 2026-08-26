@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronDown, ChevronLeft, LogIn, LogOut, MapPin, ScanLine, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, LogIn, LogOut, MapPin, RefreshCw, ScanLine, X } from "lucide-react";
 import { Html5Qrcode, Html5QrcodeScannerState } from "html5-qrcode";
 import { processTicketScan, subscribeToParkingAreas } from "@/lib/services/db";
 import type { ParkingArea } from "@/lib/types/schema";
@@ -12,6 +12,7 @@ import { RequireGuard } from "@/components/RequireGuard";
 export default function ScanQRPage() {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [error, setError] = useState("");
+  const [scanAttempt, setScanAttempt] = useState(0);
 
   // State Management to handle UI screens smoothly
   const [isProcessing, setIsProcessing] = useState(false);
@@ -71,10 +72,32 @@ export default function ScanQRPage() {
         return Promise.resolve();
       }
 
-      stopping = scanner.stop().finally(() => {
-        stopping = null;
-      });
+      stopping = scanner
+        .stop()
+        .catch(() => {})
+        .then(() => scanner?.clear())
+        .finally(() => {
+          stopping = null;
+        });
       return stopping;
+    };
+
+    const cameraErrorMessage = (err: unknown) => {
+      const name = (err as { name?: string })?.name;
+
+      if (!window.isSecureContext) {
+        return "Camera access requires HTTPS (or localhost). Open this site through its secure URL and try again.";
+      }
+      if (name === "NotAllowedError" || name === "SecurityError") {
+        return "Camera permission was blocked. Allow camera access in your browser settings, then try again.";
+      }
+      if (name === "NotFoundError") {
+        return "No camera was found on this device. Connect or enable a camera, then try again.";
+      }
+      if (name === "NotReadableError") {
+        return "The camera is being used by another app or browser tab. Close it, then try again.";
+      }
+      return "Could not start the camera. Check its permission and try again.";
     };
 
     async function handleScanResult(decodedText: string) {
@@ -102,15 +125,31 @@ export default function ScanQRPage() {
       }
     }
 
-    const startFrame = requestAnimationFrame(() => {
-      if (disposed) return;
+    const startScanner = async () => {
+      try {
+        if (!navigator.mediaDevices?.getUserMedia) {
+          throw new Error("Camera API unavailable");
+        }
 
-      scanner = new Html5Qrcode("qr-reader");
-      scannerRef.current = scanner;
+        // Ask for permission before listing cameras. This makes rear-camera labels
+        // available on mobile and avoids selecting a non-existent camera by constraint.
+        const permissionStream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: { facingMode: { ideal: "environment" } },
+        });
+        permissionStream.getTracks().forEach((track) => track.stop());
 
-      scanner
-        .start(
-          { facingMode: "environment" },
+        if (disposed) return;
+
+        const cameras = await Html5Qrcode.getCameras();
+        const rearCamera = cameras.find((camera) => /back|rear|environment/i.test(camera.label));
+        const selectedCamera = rearCamera?.id ?? cameras[0]?.id;
+
+        scanner = new Html5Qrcode("qr-reader");
+        scannerRef.current = scanner;
+
+        await scanner.start(
+          selectedCamera ?? { facingMode: "environment" },
           { fps: 10, qrbox: { width: 220, height: 220 } },
           (decodedText) => {
             if (resultHandled || disposed) return;
@@ -121,13 +160,16 @@ export default function ScanQRPage() {
               .catch(() => setError("Unable to stop the camera scanner"));
           },
           () => {}
-        )
-        .then(() => {
-          if (disposed) return stopScanner();
-        })
-        .catch((err) => {
-          if (!disposed) setError("Camera access failed: " + err);
-        });
+        );
+
+        if (disposed) await stopScanner();
+      } catch (err) {
+        if (!disposed) setError(cameraErrorMessage(err));
+      }
+    };
+
+    const startFrame = requestAnimationFrame(() => {
+      void startScanner();
     });
 
     return () => {
@@ -136,7 +178,7 @@ export default function ScanQRPage() {
       stopScanner().catch(() => {});
       if (scannerRef.current === scanner) scannerRef.current = null;
     };
-  }, [router]);
+  }, [router, scanAttempt]);
 
   const isScanning = !isProcessing && !successMessage && !rejectMessage;
   const isExit = action === "Exited";
@@ -250,9 +292,20 @@ export default function ScanQRPage() {
             </div>
 
             {error ? (
-              <p role="alert" className="mt-4 text-center text-sm font-semibold text-red-400">
-                {error}
-              </p>
+              <div role="alert" className="mt-4 flex flex-col items-center gap-3 text-center">
+                <p className="text-sm font-semibold text-red-400">{error}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError("");
+                    setScanAttempt((attempt) => attempt + 1);
+                  }}
+                  className="pc-btn border border-white/25 bg-white/10 text-white hover:bg-white/20"
+                >
+                  <RefreshCw size={16} />
+                  Retry camera
+                </button>
+              </div>
             ) : (
               <p className="mt-4 flex items-center justify-center gap-2 text-center text-sm text-white/55">
                 <ScanLine size={15} />
