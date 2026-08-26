@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 import { AppBar } from "@/components/AppBar";
 import { Wordmark, Tagline } from "@/components/Wordmark";
+import { RequireGuard } from "@/components/RequireGuard";
 
 const VALID_FOR_HOURS = 12;
 
@@ -131,18 +132,20 @@ function ResultContent() {
 
 export default function GenerateQRCodeResultPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="bg-sand-50 flex min-h-screen w-full items-center justify-center">
-          <div className="pc-card w-full max-w-md p-6">
-            <div className="pc-skeleton mx-auto h-6 w-32 rounded" />
-            <div className="pc-skeleton mx-auto mt-6 h-[200px] w-[200px] rounded-2xl" />
-            <div className="pc-skeleton mx-auto mt-6 h-4 w-40 rounded" />
+    <RequireGuard>
+      <Suspense
+        fallback={
+          <div className="bg-sand-50 flex min-h-screen w-full items-center justify-center">
+            <div className="pc-card w-full max-w-md p-6">
+              <div className="pc-skeleton mx-auto h-6 w-32 rounded" />
+              <div className="pc-skeleton mx-auto mt-6 h-[200px] w-[200px] rounded-2xl" />
+              <div className="pc-skeleton mx-auto mt-6 h-4 w-40 rounded" />
+            </div>
           </div>
-        </div>
-      }
-    >
-      <ResultContent />
-    </Suspense>
+        }
+      >
+        <ResultContent />
+      </Suspense>
+    </RequireGuard>
   );
 }

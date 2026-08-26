@@ -7,15 +7,16 @@ import { ChevronDown, ChevronLeft, LogIn, LogOut, MapPin, ScanLine, X } from "lu
 import { Html5Qrcode, Html5QrcodeScannerState } from "html5-qrcode";
 import { processTicketScan, subscribeToParkingAreas } from "@/lib/services/db";
 import type { ParkingArea } from "@/lib/types/schema";
+import { RequireGuard } from "@/components/RequireGuard";
 
 export default function ScanQRPage() {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [error, setError] = useState("");
 
-  // New State Management to handle UI screens smoothly
+  // State Management to handle UI screens smoothly
   const [isProcessing, setIsProcessing] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
-  const [rejectMessage, setRejectMessage] = useState(""); // New rejection state
+  const [rejectMessage, setRejectMessage] = useState(""); 
 
   const router = useRouter();
 
@@ -37,7 +38,7 @@ export default function ScanQRPage() {
     locationRef.current = location;
   }, [location]);
 
-  // --- Fetch dynamic locations from Firebase ---
+  // Fetch dynamic locations from Firebase
   useEffect(() => {
     const unsubscribe = subscribeToParkingAreas((liveData) => {
       setParkingAreas(liveData);
@@ -141,7 +142,8 @@ export default function ScanQRPage() {
   const isExit = action === "Exited";
 
   return (
-    <div className="bg-ink-900 flex min-h-screen w-full flex-col text-white">
+    <RequireGuard>
+      <div className="bg-ink-900 flex min-h-screen w-full flex-col text-white">
       <header className="bg-brand-400 text-ink-900 sticky top-0 z-20">
         <div className="mx-auto flex w-full max-w-md items-center gap-2 px-4 py-3">
           <Link
@@ -293,7 +295,8 @@ export default function ScanQRPage() {
           />
         )}
       </main>
-    </div>
+      </div>
+    </RequireGuard>
   );
 }
 

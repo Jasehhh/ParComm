@@ -1,7 +1,6 @@
 "use client";
 
 import { getPercentFull, getStatus } from "@/lib/parkingStatus";
-import type { ParkingArea } from "@/lib/types/schema";
 import { StatusPill } from "@/components/StatusPill";
 import type { LotCardProps } from "@/lib/types/types";
 
