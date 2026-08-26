@@ -1,4 +1,4 @@
-// lib/functional.ts
+
 import { Result } from "@/lib/types/types";
 /**
  * pipe — Higher-Order Function + Function Composition
