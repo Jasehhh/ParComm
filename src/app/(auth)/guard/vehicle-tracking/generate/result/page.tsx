@@ -12,6 +12,12 @@ import { RequireGuard } from "@/components/RequireGuard";
 
 const VALID_FOR_HOURS = 12;
 
+/**
+ * No printer on site yet, so drivers photograph the QR instead. Set to true to
+ * bring back the Print button; the print layout in globals.css is still there.
+ */
+const PRINTING_ENABLED = false;
+
 const formatValidUntil = (date: Date): string =>
   date.toLocaleDateString("en-US", {
     month: "long",
@@ -54,7 +60,9 @@ function ResultContent() {
       <div className="print:hidden">
         <AppBar
           title="Ticket ready"
-          subtitle="Print and hand to the driver"
+          subtitle={
+            PRINTING_ENABLED ? "Print and hand to the driver" : "Have the driver take a photo of the QR"
+          }
           backHref="/guard/vehicle-tracking/generate"
         />
       </div>
@@ -116,11 +124,16 @@ function ResultContent() {
         </section>
 
         <div className="mt-5 flex flex-col gap-2.5 print:hidden">
-          <button type="button" onClick={() => window.print()} className="pc-btn pc-btn-dark w-full">
-            <Printer size={17} />
-            Print ticket
-          </button>
-          <Link href="/guard/vehicle-tracking/generate" className="pc-btn pc-btn-ghost w-full">
+          {PRINTING_ENABLED && (
+            <button type="button" onClick={() => window.print()} className="pc-btn pc-btn-dark w-full">
+              <Printer size={17} />
+              Print ticket
+            </button>
+          )}
+          <Link
+            href="/guard/vehicle-tracking/generate"
+            className={`pc-btn w-full ${PRINTING_ENABLED ? "pc-btn-ghost" : "pc-btn-dark"}`}
+          >
             <RotateCcw size={16} />
             Generate another
           </Link>
