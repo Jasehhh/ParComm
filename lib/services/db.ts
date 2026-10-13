@@ -5,6 +5,10 @@ import { ActivityLogRecord, ParkingArea } from "@/lib/types/schema";
 
 const db = getFirestore(app);
 
+// A serverTimestamp() reads back as null until the server confirms the write.
+const toMillis = (value: unknown): number | null =>
+  value instanceof Timestamp ? value.toMillis() : null;
+
 
 //activity logs
 export const subscribeToActivityLogs = (callback: (logs: ActivityLogRecord[]) => void) => {
@@ -24,13 +28,20 @@ export const subscribeToActivityLogs = (callback: (logs: ActivityLogRecord[]) =>
         // en-CA renders as YYYY-MM-DD
         calendarDay = dateObj.toLocaleDateString('en-CA');
       }
+      const status = data.status === 'Active' ? 'Not Parked' : (data.status || 'Not Parked');
+      const lastEventAt = toMillis(data.time_stamp);
+
+      // Rows written before parked_at/exited_at existed only carry the time of
+      // their latest event, so fall back to it when the status matches.
       return {
         qrId: data.qrId || doc.id.substring(0, 6).toUpperCase(),
         plate_number: data.plate_number || 'Unknown',
         time_stamp: formattedTime,
         date: calendarDay,
-        status: data.status === 'Active' ? 'Not Parked' : (data.status || 'Not Parked'),
-        location: data.location || '-'
+        status,
+        location: data.location || '-',
+        parkedAt: toMillis(data.parked_at) ?? (status === 'Parked' ? lastEventAt : null),
+        exitedAt: toMillis(data.exited_at) ?? (status === 'Exited' ? lastEventAt : null)
       } as ActivityLogRecord;
     });
 
@@ -170,7 +181,8 @@ export const processTicketScan = async (
         plate_number: plateNumber,
         status: action,
         location: locationId,
-        time_stamp: serverTimestamp()
+        time_stamp: serverTimestamp(),
+        parked_at: serverTimestamp()
       });
     } else {
       await addDoc(logCollection, {
@@ -178,7 +190,8 @@ export const processTicketScan = async (
         plate_number: plateNumber,
         status: action,
         location: locationId,
-        time_stamp: serverTimestamp()
+        time_stamp: serverTimestamp(),
+        parked_at: serverTimestamp()
       });
     }
   } else if (action === "Exited") {
@@ -190,7 +203,8 @@ export const processTicketScan = async (
       const logDoc = logSnap.docs[0];
       await updateDoc(logDoc.ref, {
         status: "Exited",
-        time_stamp: serverTimestamp()
+        time_stamp: serverTimestamp(),
+        exited_at: serverTimestamp()
       });
     }
   }

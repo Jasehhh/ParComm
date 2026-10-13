@@ -10,6 +10,7 @@ import { combinePredicates, sortBy, unique } from "@/lib/functional";
 import { subscribeToParkingAreas, subscribeToActivityLogs } from "@/lib/services/db";
 import type { ActivityLogRecord, ParkingArea } from "@/lib/types/schema";
 import { LotCard } from "@/components/LotCard";
+import { PeakHoursChart } from "@/components/PeakHoursChart";
 import { OccupancyGauge } from "@/components/OccupancyGauge";
 import { StatTile } from "@/components/StatTile";
 import { LoadingState } from "@/components/LoadingState";
@@ -195,6 +196,8 @@ export default function AdminDashboardPage() {
           <StatTile label="Capacity" value={campusTotal.capacity} hint="All lots" />
           <StatTile label="Log entries" value={activities.length} hint="Today's feed" />
         </div>
+
+        <PeakHoursChart rows={activities} />
 
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
           <section className="pc-card overflow-hidden">
