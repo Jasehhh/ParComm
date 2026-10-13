@@ -1,9 +1,15 @@
 
-import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query, where, doc, increment, updateDoc, getDoc, getDocs, orderBy, Timestamp } from "firebase/firestore";
+import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query, where, doc, increment, updateDoc, getDoc, getDocs, orderBy, Timestamp, runTransaction } from "firebase/firestore";
 import app from "@/lib/firebase";
 import { ActivityLogRecord, ParkingArea } from "@/lib/types/schema";
+import type { CapacityError, Result } from "@/lib/types/types";
+import { validateCapacity } from "@/lib/capacity";
 
 const db = getFirestore(app);
+
+// A serverTimestamp() reads back as null until the server confirms the write.
+const toMillis = (value: unknown): number | null =>
+  value instanceof Timestamp ? value.toMillis() : null;
 
 
 //activity logs
@@ -24,13 +30,20 @@ export const subscribeToActivityLogs = (callback: (logs: ActivityLogRecord[]) =>
         // en-CA renders as YYYY-MM-DD
         calendarDay = dateObj.toLocaleDateString('en-CA');
       }
+      const status = data.status === 'Active' ? 'Not Parked' : (data.status || 'Not Parked');
+      const lastEventAt = toMillis(data.time_stamp);
+
+      // Rows written before parked_at/exited_at existed only carry the time of
+      // their latest event, so fall back to it when the status matches.
       return {
         qrId: data.qrId || doc.id.substring(0, 6).toUpperCase(),
         plate_number: data.plate_number || 'Unknown',
         time_stamp: formattedTime,
         date: calendarDay,
-        status: data.status === 'Active' ? 'Not Parked' : (data.status || 'Not Parked'),
-        location: data.location || '-'
+        status,
+        location: data.location || '-',
+        parkedAt: toMillis(data.parked_at) ?? (status === 'Parked' ? lastEventAt : null),
+        exitedAt: toMillis(data.exited_at) ?? (status === 'Exited' ? lastEventAt : null)
       } as ActivityLogRecord;
     });
 
@@ -170,7 +183,8 @@ export const processTicketScan = async (
         plate_number: plateNumber,
         status: action,
         location: locationId,
-        time_stamp: serverTimestamp()
+        time_stamp: serverTimestamp(),
+        parked_at: serverTimestamp()
       });
     } else {
       await addDoc(logCollection, {
@@ -178,7 +192,8 @@ export const processTicketScan = async (
         plate_number: plateNumber,
         status: action,
         location: locationId,
-        time_stamp: serverTimestamp()
+        time_stamp: serverTimestamp(),
+        parked_at: serverTimestamp()
       });
     }
   } else if (action === "Exited") {
@@ -190,7 +205,8 @@ export const processTicketScan = async (
       const logDoc = logSnap.docs[0];
       await updateDoc(logDoc.ref, {
         status: "Exited",
-        time_stamp: serverTimestamp()
+        time_stamp: serverTimestamp(),
+        exited_at: serverTimestamp()
       });
     }
   }
@@ -202,4 +218,33 @@ export const processTicketScan = async (
   });
 
   return { plateNumber, newStatus: action };
+};
+
+// Admin: set a lot's maximum capacity. Read and write in one transaction so a
+// vehicle parking mid-edit cannot leave the lot with fewer spaces than cars.
+// Returns a Result instead of throwing, matching attemptLogin and parsePlate.
+export const updateParkingCapacity = async (
+  areaId: string,
+  capacity: number
+): Promise<Result<number, CapacityError>> => {
+  const areaRef = doc(db, "parking_areas", areaId);
+
+  try {
+    return await runTransaction(db, async (transaction): Promise<Result<number, CapacityError>> => {
+      const areaSnap = await transaction.get(areaRef);
+      if (!areaSnap.exists()) {
+        return { ok: false, error: { type: "NOT_FOUND", message: "This parking area no longer exists." } };
+      }
+
+      // Same rules as the form, re-run against the occupancy read inside the
+      // transaction. Only a valid capacity is written.
+      const checked = validateCapacity(areaSnap.data().occupied ?? 0)(capacity);
+      if (checked.ok) {
+        transaction.update(areaRef, { capacity: checked.value });
+      }
+      return checked;
+    });
+  } catch {
+    return { ok: false, error: { type: "SAVE_FAILED", message: "Could not save the new capacity." } };
+  }
 };

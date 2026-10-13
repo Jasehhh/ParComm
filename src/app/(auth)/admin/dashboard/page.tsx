@@ -9,9 +9,8 @@ import { freeSpaces, getPercentFull, getStatus, totalOccupancy } from "@/lib/par
 import { combinePredicates, sortBy, unique } from "@/lib/functional";
 import { subscribeToParkingAreas, subscribeToActivityLogs } from "@/lib/services/db";
 import type { ActivityLogRecord, ParkingArea } from "@/lib/types/schema";
-import { LotCard } from "@/components/LotCard";
-import { OccupancyGauge } from "@/components/OccupancyGauge";
-import { StatTile } from "@/components/StatTile";
+import { CapacityEditor } from "@/components/CapacityEditor";
+import { PeakHoursChart } from "@/components/PeakHoursChart";
 import { LoadingState } from "@/components/LoadingState";
 import { Wordmark } from "@/components/Wordmark";
 
@@ -180,21 +179,45 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Headline numbers first — this is a monitoring screen */}
-        <div className="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-          <StatTile
-            label="Occupied"
-            value={campusTotal.occupied}
-            hint={`${percentFull}% of campus`}
-          />
-          <StatTile
-            label="Available"
-            value={availableSpaces}
-            accent={campusStatus.color}
-            hint={campusStatus.label}
-          />
-          <StatTile label="Capacity" value={campusTotal.capacity} hint="All lots" />
-          <StatTile label="Log entries" value={activities.length} hint="Today's feed" />
-        </div>
+        <section
+          aria-label="Campus totals"
+          className="pc-card mb-5 grid grid-cols-2 overflow-hidden sm:grid-cols-4"
+        >
+          <Metric label="Parked now" value={campusTotal.occupied}>
+            of {campusTotal.capacity} spaces
+          </Metric>
+          <Metric label="Free spaces" value={availableSpaces} className="border-l">
+            <span className="inline-flex items-center gap-1.5">
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: campusStatus.color }}
+                aria-hidden="true"
+              />
+              {campusStatus.label}
+            </span>
+          </Metric>
+          <Metric
+            label="Occupancy"
+            value={`${percentFull}%`}
+            className="border-t sm:border-l sm:border-t-0"
+          >
+            <span className="bg-sand-200 mt-1.5 block h-1 w-full max-w-28 overflow-hidden rounded-full">
+              <span
+                className="block h-full rounded-full transition-[width] duration-700 ease-out"
+                style={{ width: `${percentFull}%`, backgroundColor: campusStatus.color }}
+              />
+            </span>
+          </Metric>
+          <Metric
+            label="Log entries"
+            value={activities.length}
+            className="border-l border-t sm:border-t-0"
+          >
+            in the activity log
+          </Metric>
+        </section>
+
+        <PeakHoursChart rows={activities} />
 
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
           <section className="pc-card overflow-hidden">
@@ -364,31 +387,33 @@ export default function AdminDashboardPage() {
             )}
           </section>
 
-          <aside className="flex flex-col gap-3 lg:sticky lg:top-20">
-            <div className="pc-card p-5">
-              <p className="pc-eyebrow">Campus parking</p>
-              <p className="text-ink-900 text-sm font-semibold">All lots combined</p>
-
-              <div className="py-4">
-                <OccupancyGauge
-                  occupied={campusTotal.occupied}
-                  capacity={campusTotal.capacity}
-                  size={180}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2.5">
-                <StatTile label="Available" value={availableSpaces} accent={campusStatus.color} />
-                <StatTile label="Capacity" value={campusTotal.capacity} />
-              </div>
-            </div>
-
-            {parkingAreas.map((area) => (
-              <LotCard key={area.id} {...area} />
-            ))}
+          <aside className="flex flex-col gap-3">
+            <CapacityEditor areas={parkingAreas} />
           </aside>
         </div>
       </main>
+    </div>
+  );
+}
+
+// One figure in the campus totals strip. Borders come from the caller so the
+// strip can switch between a 2x2 grid on phones and a single row above that.
+function Metric({
+  label,
+  value,
+  className = "",
+  children,
+}: {
+  label: string;
+  value: React.ReactNode;
+  className?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className={`border-sand-200 px-5 py-4 ${className}`}>
+      <p className="text-ink-500 text-xs font-medium">{label}</p>
+      <p className="text-ink-900 mt-1 text-2xl font-bold leading-none tracking-tight">{value}</p>
+      <div className="text-ink-400 mt-1.5 text-xs">{children}</div>
     </div>
   );
 }

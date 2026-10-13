@@ -12,7 +12,7 @@ students, guards, and administrators.
 |---|---|---|
 | User Dashboard &mdash; live parking availability | `/user` | Implemented |
 | Guard Dashboard &mdash; occupancy view, entry point to ticketing | `/guard` | Implemented |
-| Admin Dashboard &mdash; activity log, campus totals | `/admin/dashboard` | Partial &mdash; capacity-threshold editing and peak-hour graphs pending |
+| Admin Dashboard &mdash; activity log, campus totals, lot capacity editing, peak-hour graph | `/admin/dashboard` | Implemented |
 | QR Code Generator &mdash; plate validation, ticket creation, 12-hour expiry | `/guard/vehicle-tracking/generate` | Implemented |
 | QR Code Scanner &mdash; camera scan on park/exit, rejects expired tickets | `/guard/vehicle-tracking/scan` | Implemented |
 

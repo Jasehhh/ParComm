@@ -8,6 +8,15 @@ export type PlateError =
   | { type: "INVALID_CHARS"; message: string }
   | { type: "INVALID_FORMAT"; message: string };
 
+export type CapacityError =
+  | { type: "EMPTY"; message: string }
+  | { type: "NOT_WHOLE"; message: string }
+  | { type: "TOO_LOW"; message: string }
+  | { type: "TOO_HIGH"; message: string }
+  | { type: "BELOW_OCCUPIED"; message: string }
+  | { type: "NOT_FOUND"; message: string }
+  | { type: "SAVE_FAILED"; message: string };
+
 
 export type AppBarProps = {
   title: string;
