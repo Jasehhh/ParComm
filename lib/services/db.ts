@@ -1,7 +1,9 @@
 
-import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query, where, doc, increment, updateDoc, getDoc, getDocs, orderBy, Timestamp } from "firebase/firestore";
+import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query, where, doc, increment, updateDoc, getDoc, getDocs, orderBy, Timestamp, runTransaction } from "firebase/firestore";
 import app from "@/lib/firebase";
 import { ActivityLogRecord, ParkingArea } from "@/lib/types/schema";
+import type { CapacityError, Result } from "@/lib/types/types";
+import { validateCapacity } from "@/lib/capacity";
 
 const db = getFirestore(app);
 
@@ -216,4 +218,33 @@ export const processTicketScan = async (
   });
 
   return { plateNumber, newStatus: action };
+};
+
+// Admin: set a lot's maximum capacity. Read and write in one transaction so a
+// vehicle parking mid-edit cannot leave the lot with fewer spaces than cars.
+// Returns a Result instead of throwing, matching attemptLogin and parsePlate.
+export const updateParkingCapacity = async (
+  areaId: string,
+  capacity: number
+): Promise<Result<number, CapacityError>> => {
+  const areaRef = doc(db, "parking_areas", areaId);
+
+  try {
+    return await runTransaction(db, async (transaction): Promise<Result<number, CapacityError>> => {
+      const areaSnap = await transaction.get(areaRef);
+      if (!areaSnap.exists()) {
+        return { ok: false, error: { type: "NOT_FOUND", message: "This parking area no longer exists." } };
+      }
+
+      // Same rules as the form, re-run against the occupancy read inside the
+      // transaction. Only a valid capacity is written.
+      const checked = validateCapacity(areaSnap.data().occupied ?? 0)(capacity);
+      if (checked.ok) {
+        transaction.update(areaRef, { capacity: checked.value });
+      }
+      return checked;
+    });
+  } catch {
+    return { ok: false, error: { type: "SAVE_FAILED", message: "Could not save the new capacity." } };
+  }
 };

@@ -9,7 +9,7 @@ import { freeSpaces, getPercentFull, getStatus, totalOccupancy } from "@/lib/par
 import { combinePredicates, sortBy, unique } from "@/lib/functional";
 import { subscribeToParkingAreas, subscribeToActivityLogs } from "@/lib/services/db";
 import type { ActivityLogRecord, ParkingArea } from "@/lib/types/schema";
-import { LotCard } from "@/components/LotCard";
+import { CapacityEditor } from "@/components/CapacityEditor";
 import { PeakHoursChart } from "@/components/PeakHoursChart";
 import { OccupancyGauge } from "@/components/OccupancyGauge";
 import { StatTile } from "@/components/StatTile";
@@ -386,9 +386,7 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {parkingAreas.map((area) => (
-              <LotCard key={area.id} {...area} />
-            ))}
+            <CapacityEditor areas={parkingAreas} />
           </aside>
         </div>
       </main>
